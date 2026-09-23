@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "configured": true,
+  "settings": {
+    "default_output_folder": "D:/CAMINHO/DA/PASTA/DE/SAIDA",
+    "allowed_extensions": [
+      ".tif",
+      ".tiff"
+    ],
+    "copy_mode": "duplicate_files",
+    "open_folder_after_generate": true,
+    "generate_txt_summary": true,
+    "generate_cart_json": true
+  },
+  "teams": [
+    {
+      "id": "atletico_mineiro",
+      "name": "Atletico Mineiro",
+      "models": [
+        {
+          "id": "camisa_branca",
+          "name": "CAMISA BRANCA",
+          "description": "",
+          "features": {
+            "has_letters": false,
+            "has_full_letter_row": true,
+            "has_back_numbers": true,
+            "has_front_numbers": false,
+            "has_logos": true,
+            "has_complete_shirt": true
+          },
+          "categories": [
+            {
+              "feature": "has_complete_shirt",
+              "name": "Camisa Completa",
+              "type": "all_files_from_folder",
+              "extensions": [
+                ".tif",
+                ".tiff"
+              ],
+              "quick_action": true,
+              "allow_group_add": false,
+              "output_folder_name": "00_CAMISA_COMPLETA",
+              "id": "camisa_completa",
+              "folder_path": "D:/CAMINHO/ATLETICO_MINEIRO/camisa_completa",
+              "enabled": true
+            },
+            {
+              "feature": "has_full_letter_row",
+              "name": "Fila Completa de Letras",
+              "type": "individual_from_folder",
+              "extensions": [
+                ".tif",
+                ".tiff"
+              ],
+              "item_label_regex": "^([a-zA-Z])",
+              "item_label_mode": "regex_first_group",
+              "quick_action": true,
+              "quick_action_all_files": true,
+              "allow_group_add": true,
+              "output_folder_name": "01_FILA_COMPLETA_LETRAS",
+              "id": "fila_completa_letras",
+              "folder_path": "D:/CAMINHO/ATLETICO_MINEIRO/fila_completa_letras",
+              "enabled": true
+            },
+            {
+              "feature": "has_back_numbers",
+              "name": "Número Costas",
+              "type": "individual_from_folder",
+              "extensions": [
+                ".tif",
+                ".tiff"
+              ],
+              "item_label_regex": "^(\\d+)",
+              "item_label_mode": "regex_first_group",
+              "quick_action": false,
+              "allow_group_add": true,
+              "output_folder_name": "02_NUMEROS_COSTAS",
+              "id": "numero_costas",
+              "folder_path": "D:/CAMINHO/ATLETICO_MINEIRO/numero_costas",
+              "enabled": true
+            },
+            {
+              "feature": "has_logos",
+              "name": "Logos / Patrocinadores",
+              "type": "individual_from_folder",
+              "extensions": [
+                ".tif",
+                ".tiff"
+              ],
+              "quick_action": true,
+              "quick_action_all_files": true,
+              "allow_group_add": true,
+              "output_folder_name": "04_LOGOS_PATROCINADORES",
+              "id": "logos",
+              "folder_path": "D:/CAMINHO/ATLETICO_MINEIRO/logos",
+              "enabled": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cruzeiro",
+      "name": "Cruzeiro",
+      "models": []
+    }
+  ]
+}

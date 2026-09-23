@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Build (gerado por build_exe.bat)
+build/
+dist/
+
+# Configuração local da máquina (caminhos D:/... e catálogo real)
+config/catalogo.json
+config/settings.json
+config/backups/*
+!config/backups/.gitkeep
+
+# Dados de runtime
+data/pedidos_salvos/*
+!data/pedidos_salvos/.gitkeep
+logs/*
+!logs/.gitkeep
+
+# Editor / OS
+.idea/
+.vscode/
+Thumbs.db
+.claude/
