@@ -1,6 +1,6 @@
 # Catálogo v2 e importação de pedido (sub-projeto 1)
 
-Data: 2026-09-23 · Status: aguardando revisão · Tamanho estimado: S/M (~1 dia)
+Data: 2026-09-23 · Status: aguardando revisão (v2 da spec, com preparação para os próximos sub-projetos) · Tamanho estimado: M (~1 a 1,5 dia)
 
 ## Contexto
 
@@ -8,10 +8,15 @@ Projeto maior: site onde clientes de DTF de camisa de time montam o pedido e o d
 de Pedido Futebol. Decisões gerais estão na memória do projeto (`project_site-pedidos-dtf`). O projeto se divide em 4
 sub-projetos, cada um com spec, plano e código próprios:
 
-1. **Este:** núcleo no Montador (catálogo v2, contrato do pedido, importar pedido de arquivo `.json`).
-2. Publicar catálogo (prévias `.webp` + `catalog.json` no R2).
+1. **Este:** núcleo no Montador (catálogo v2, contrato do pedido, importar pedido de arquivo `.json`) **e a
+   preparação do terreno** para os demais (ver "Preparação para os próximos sub-projetos").
+2. Publicar catálogo (prévias `.webp` + `catalog.public.json` no R2).
 3. API (Worker + D1).
 4. Site do cliente.
+
+Visão completa, arquitetura alvo, escopo de cada sub-projeto e v2: [`docs/roadmap.md`](../../roadmap.md).
+Este sub-projeto é a **base**: só entrega o que os próximos consomem e o que é barato de fazer agora e caro de mudar
+depois (contratos, IDs, versionamento, segredos fora do git).
 
 ## Objetivo e critério de sucesso
 
@@ -93,6 +98,17 @@ Item que não existe no catálogo local **não bloqueia**: gera aviso, entra no 
 | 5 | `src/ui/config_window.py` | Campos **Ano** e **Ativa (aparece no site)** no cadastro da camisa | 2 |
 | 6 | `src/ui/order_panel.py`, `src/ui/main_window.py` | Menu de camisas usa `model_display_name` (evita colisão de nome entre anos); botão **Importar Pedido** (seletor de arquivo → confirma se o carrinho tem itens → `load_order_payload` → mostra avisos); botões da barra de 130 para 116 px para caber na largura mínima 1180 | 2, 3 |
 
+Linhas de preparação (detalhes na próxima seção):
+
+| # | Arquivo | Mudança | Depende de |
+|---|---|---|---|
+| 7 | `src/services/catalog_service.py` | `save_catalog` grava `updated_at` (UTC, ISO 8601 com `Z`) no catálogo | 2 |
+| 8 | `src/services/order_import_service.py` | Parser ignora campos desconhecidos (compatibilidade futura) | 3 |
+| 9 | `contracts/catalog.public.schema.json`, `contracts/catalog.public.example.json`, `contracts/README.md` | Rascunho do catálogo público (consumido pelo SP2/SP4) e regras de versionamento dos contratos | 4 |
+| 10 | `.gitignore` | Ignora `config/site.json` (tokens do SP2/SP3) antes de o arquivo existir | - |
+| 11 | `.github/workflows/tests.yml` | CI: `pytest` a cada push/PR (Windows, Python 3.12) | - |
+| 12 | `docs/roadmap.md` | Visão completa dos sub-projetos 2 a 4 e da v2 (já escrito) | - |
+
 Ponto de atenção: hoje o menu de camisas é montado como `{nome: id}`; sem o ano no rótulo, duas camisas de mesmo nome
 e anos diferentes se sobrescreveriam.
 
@@ -119,7 +135,39 @@ Catálogo v1 e pedidos salvos atuais abrem sem alteração: camisas sem `season`
 - Importação: pedido válido; `order.example.json` válido; mapeamento de Observação (com e sem WhatsApp/nota);
   `model_name` com ano; versão desconhecida; JSON inválido; campo faltando; quantidade 0, 1000, `true`, `"2"`;
   item fora do catálogo vira aviso.
+- `save_catalog` grava `updated_at` em UTC (termina em `Z`) e o valor muda a cada gravação.
+- Parser ignora campos extras (ex.: `custom` num item, `foo` na raiz) sem erro e sem carregá-los no payload.
+- `contracts/order.example.json` e `contracts/catalog.public.example.json` são JSON válidos; o primeiro é aceito
+  pelo parser. O exemplo do catálogo público tem `schema_version`, `catalog_version` e ao menos uma camisa com item.
 - Interface: verificação manual (não há testes de UI no projeto).
+
+## Preparação para os próximos sub-projetos
+
+O que este sub-projeto deixa pronto para que SP2, SP3 e SP4 não precisem refazer nada:
+
+1. **Contratos versionados em `contracts/`.** Regra (em `contracts/README.md`): campo novo *opcional* mantém a mesma
+   `schema_version`; qualquer mudança que quebre leitores antigos cria versão nova. Site e Montador leem o mesmo arquivo.
+2. **Parser tolerante.** Ignora campos desconhecidos. Assim o SP4 pode adicionar, por exemplo, `custom` (nome e número
+   personalizados da v2) sem quebrar um Montador antigo.
+3. **`updated_at` no catálogo.** É a base do `catalog_version`: o SP2 publica com essa data/hora e cada pedido a guarda,
+   permitindo diagnosticar "de qual catálogo esse pedido saiu".
+4. **Catálogo público desenhado agora** (rascunho em `contracts/catalog.public.schema.json`), porque ele é a interface
+   entre SP2 (quem gera) e SP4 (quem consome):
+   - raiz: `schema_version`, `catalog_version`, `teams[]`;
+   - `teams[].models[]`: `id`, `name`, `season`, `description`, `categories[]`;
+   - `categories[]`: `id`, `name`, `type`, `allow_group_add`, `all_files_option` (bool), `items[]`;
+   - `items[]`: `label`, `preview` (caminho relativo `previews/<time>/<camisa>/<categoria>/<item>.webp`);
+   - só camisas `active` e categorias `enabled`; categorias de tipo "todos os arquivos" trazem o item
+     `ALL_FILES_LABEL` ("Todos os arquivos"), que é o `item_label` que o pedido usa para elas (o `FileService` já copia
+     a pasta inteira para esse rótulo).
+5. **Origem do pedido separada do parser.** `parse_site_order(dict)` não sabe de onde veio o JSON. Hoje o botão lê um
+   arquivo; no SP3 o mesmo parser recebe o resultado de `GET /api/order?code=`.
+6. **Segredos fora do git desde já.** `config/site.json` (tokens) entra no `.gitignore` agora; o repositório é público.
+7. **CI.** `pytest` roda no GitHub a cada push, então os contratos e o parser ficam protegidos quando o site/Worker
+   começarem a mexer neles.
+
+Deliberadamente **não** entra agora (YAGNI): pasta `web/`, cliente HTTP, Pillow/prévias, tela de "importar por código",
+tabelas D1. Cada um nasce no sub-projeto que o usa.
 
 ## Fora do escopo
 
@@ -127,9 +175,11 @@ Buscar pedido pela internet, publicar catálogo/prévias, Worker/D1, site, preç
 
 ## Ordem de entrega
 
-1. Contrato + `order_import_service` + testes.
-2. Schema v2 + migração + testes.
-3. Menu de camisas com ano.
-4. Campos Ano/Ativa em Configurações.
-5. Botão Importar Pedido.
-6. Atualizar `CLAUDE.md` e `README.md`.
+1. Contrato do pedido + `order_import_service` (incluindo parser tolerante) + testes.
+2. Schema v2 + migração + `updated_at` + testes.
+3. Contratos do catálogo público (rascunho) + `contracts/README.md` + testes dos exemplos.
+4. Menu de camisas com ano.
+5. Campos Ano/Ativa em Configurações.
+6. Botão Importar Pedido.
+7. `.gitignore` (`config/site.json`) e CI (`.github/workflows/tests.yml`).
+8. Atualizar `CLAUDE.md` (aponta para `docs/roadmap.md` e `contracts/`) e `README.md`.
