@@ -1,7 +1,7 @@
 # Roadmap: site de pedidos DTF + Montador
 
 Visão completa do projeto. Cada sub-projeto ganha spec e plano próprios (`docs/superpowers/specs/`, `docs/superpowers/plans/`).
-Decisões de produto: memória do projeto `project-site-pedidos-dtf`. Cliente "Maycol" é um cliente, não o dono da gráfica.
+Decisões de produto: memória do projeto `project-site-pedidos-dtf`. "Cliente" neste documento é quem faz o pedido; o dono da gráfica é quem opera o Montador.
 
 ## Arquitetura alvo
 
