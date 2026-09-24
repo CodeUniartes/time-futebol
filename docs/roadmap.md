@@ -117,7 +117,14 @@ O `layout` pode ir no pedido como campo opcional e informativo; a produção rec
 O cliente envia uma arte junto do pedido e **dita o tamanho** (largura ou altura em cm, proporção mantida, máx. 58 cm).
 Aviso de responsabilidade com aceite registrado no pedido (data/hora e versão do texto): fundo, resolução ruim e afins são
 do cliente. Limites de segurança: tipos aceitos (PNG, JPG, PDF), tamanho máximo por arquivo e artes por pedido. A arte
-entra no encaixe do SP5 como mais um retângulo. Requer armazenamento (R2) e endpoint de envio no SP3.
+entra no encaixe do SP5 como mais um retângulo. Requer endpoint de envio no SP3.
+
+**Armazenamento (decisão de 2026-09-24):** o R2 guarda só o que faz o site funcionar (`catalog.public.json` e prévias).
+As artes dos clientes, mais pesadas, vão para o R2 **apenas como arquivo temporário** (prefixo `uploads/`, com regra de
+ciclo de vida que apaga sozinha após poucos dias) e passam a viver num servidor local. Para não expor o servidor local
+à internet, o Montador **busca** as artes pelo código do pedido (só conexão de saída), grava em disco e pede a remoção do
+R2 (`uploads/` continua com a expiração automática como rede de segurança). O destino local (pasta do PC, NAS ou servidor)
+fica atrás de uma interface simples, para trocar depois sem mexer no site.
 
 ## v2 (depois da base)
 
@@ -146,4 +153,5 @@ entra no encaixe do SP5 como mais um retângulo. Requer armazenamento (R2) e end
 | Retenção de pedidos no D1 | SP3 |
 | Marca d'água: texto, posição, opacidade | SP2 |
 | Domínio do site (subdomínio próprio ou `workers.dev`) | SP4 |
+| Servidor local das artes de clientes (pasta do PC, NAS ou servidor) e quantos dias o R2 as guarda | SP6 |
 | Proteção da caixa de pedidos (Cloudflare Access vs senha) | v2 |
