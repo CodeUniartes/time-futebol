@@ -118,7 +118,9 @@ arte (SP2) e da tela de resumo (SP4). SP6 entra por último. Spec do SP5: `docs/
   enviado. Todos os estados: vazio, carregando, erro, parcial. Carrinho em `localStorage`; reenvio seguro (idempotência).
 - WhatsApp: link `wa.me` com texto curto (código, cliente, total de peças e link). Lista completa só se couber; o código
   garante a importação de qualquer forma.
-- Cor de destaque troca por time. Tokens de design saem das imagens de referência (`/spartan:ux system`).
+- **Identidade visual:** segue `docs/brand.md` (laranja `#F47726` e grafite `#454849`, logo da Uniartes no cabeçalho).
+  Cor de destaque por time é secundária. Tokens de design saem do manual e das imagens de referência (`/spartan:ux system`).
+  Atenção: branco sobre o laranja da marca não passa no contraste (2,8:1); botões principais são grafite.
 - Testes: Vitest (lógica de carrinho) + Playwright (fluxo completo). Acessibilidade: alvos de 44 px, foco visível,
   contraste, `prefers-reduced-motion`.
 - **Pronto quando:** um pedido feito no celular vira código, abre o WhatsApp e importa no Montador.
