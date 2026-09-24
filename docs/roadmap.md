@@ -133,20 +133,27 @@ O `layout` pode ir no pedido como campo opcional e informativo; a produção rec
 ### SP7: login de clientes (proposto em 2026-09-24, a confirmar)
 
 O **telefone (WhatsApp) é o identificador do cliente**. Sem verificar que a pessoa é dona do número, qualquer um poderia
-ver ou refazer pedidos de outro, então o login confirma o número com um **código de uso único** (OTP).
+ver ou refazer pedidos de outro, então a **criação da conta** confirma o número com um **código de uso único** (OTP).
 
-- **Fluxo:** cliente informa o número → recebe código de 6 dígitos (validade curta, poucas tentativas) → sessão em cookie
-  `HttpOnly; Secure; SameSite=Strict`. O login pode ficar só na hora de enviar o pedido, sem travar a navegação pelo catálogo.
+- **Fluxo (decisão de 2026-09-24: o código serve só para criar a conta):**
+  1. **Criar conta:** número + nome → código de 6 dígitos por WhatsApp → cliente digita o código e **define uma senha**.
+  2. **Entrar depois:** número + senha, sem código, sem enviar mensagem. Sessão em cookie `HttpOnly; Secure; SameSite=Strict`.
+  3. **Esqueci a senha:** a definir (novo código por WhatsApp, no máximo 1 por dia por número, ou redefinição feita pela gráfica).
+  O login pode ficar só na hora de enviar o pedido, sem travar a navegação pelo catálogo.
+- **Senha:** mínimo de 8 caracteres, guardada só como hash (PBKDF2-SHA256 nativo do Workers, com sal por conta e iterações
+  ajustadas ao limite de CPU do plano), nunca em log. Bloqueio temporário após tentativas erradas.
+- **Por que só na criação:** a conexão do WhatsApp no Digisac é **não oficial**; mandar código a muitos desconhecidos pode
+  bloquear o número da gráfica. Menos mensagens enviadas = menos risco.
 - **Envio do código:** WhatsApp pelo **Digisac**. O Worker `pedido-terceiro-ca-dtf` já envia mensagem por número com
   `POST /messages` (`number`, `serviceId`, `dontOpenTicket`), então não é preciso existir contato nem abrir ticket. A conta
-  usa `DIGISAC_API_BASE_URL`, `DIGISAC_SERVICE_ID` e o token do Digisac (segredo). A confirmar: se a conexão do WhatsApp é
-  a oficial (Cloud API, que exige **modelo de mensagem aprovado** para a primeira mensagem) ou não oficial (texto livre, mas
-  com risco de bloqueio do número se enviar muito para desconhecidos). SMS fica como alternativa.
-- **Dados (D1, regras do projeto):** `customers` (id, `phone` normalizado só dígitos com `55`+DDD, `name`, datas UTC,
-  exclusão lógica), `login_codes` (só o hash do código, expiração, tentativas), `sessions`. `orders` ganha `customer_id`.
+  usa `DIGISAC_API_BASE_URL`, `DIGISAC_SERVICE_ID` e o token do Digisac (segredo). A conexão é **não oficial** (texto livre, sem modelo
+  aprovado), com o risco de bloqueio descrito acima. SMS fica como alternativa se o número for bloqueado.
+- **Dados (D1, regras do projeto):** `customers` (id, `phone` normalizado só dígitos com `55`+DDD, `name`, `password_hash`, datas UTC,
+  exclusão lógica), `signup_codes` (só o hash do código, expiração, tentativas; cadastro não confirmado expira), `sessions`. `orders` ganha `customer_id`.
   O contrato do pedido continua com `customer.whatsapp` (agora sempre presente e normalizado).
-- **Proteções:** Turnstile e limite de envios por número e por IP (evita gastar mensagens e spam), sem revelar se o número
-  já existe, bloqueio temporário após tentativas erradas.
+- **Proteções:** Turnstile e limite de envios por número e por IP (evita gastar mensagens e spam). No cadastro, número já
+  existente responde "já tem conta, entre com a senha" e **não envia código**; no login, erro genérico ("número ou senha
+  incorretos"). Bloqueio temporário após tentativas erradas.
 - **O que o cliente ganha:** dados preenchidos, histórico dos pedidos, refazer um pedido anterior e, no SP6, biblioteca
   das próprias artes.
 - **Privacidade (LGPD):** aviso do uso do telefone e do nome, consulta e exclusão dos dados a pedido, retenção definida.
