@@ -92,6 +92,16 @@ arte (SP2) e da tela de resumo (SP4). SP6 entra por último. Spec do SP5: `docs/
 - **Riscos:** spam no endpoint público (Turnstile + limite obrigatórios); tokens vazando (repositório público: segredos só
   em `wrangler secret` e `config/site.json` local); código adivinhável (mitigado por token de leitura).
 - **Retenção:** pedidos apagados (lógico) após 180 dias, decisão a confirmar no SP3.
+- **Finalizar pedido (integração com o Worker `pedido-terceiro-ca-dtf`, decisão de 2026-09-24):**
+  - Ao criar a tarefa no ClickUp, o dono põe o código `DTF-XXXXX` na **descrição** da tarefa. O Worker do ClickUp extrai
+    o código da descrição quando a tarefa é finalizada (regex do alfabeto do código; se houver mais de um, trata todos).
+  - A chamada é por **service binding** com RPC (`WorkerEntrypoint`): o Worker do site expõe `finishOrder(code)` sem rota
+    HTTP pública, então não há endpoint exposto nem token para esse trecho. O outro Worker só ganha um binding no
+    `wrangler`; nenhum código dele é alterado além da chamada.
+  - `finishOrder(code)`: apaga `uploads/<code>/` no R2, marca o pedido como concluído no D1 e devolve quantos arquivos
+    apagou. Idempotente (chamar duas vezes não falha) e código inexistente devolve "não encontrado" sem erro.
+  - Camadas de limpeza: 1) finalizar no ClickUp; 2) o Montador apaga do R2 depois de baixar a arte (SP6); 3) expiração
+    automática do R2 como rede de segurança.
 
 ### SP4: site do cliente
 
