@@ -148,3 +148,29 @@ def model_display_name(model):
     if isinstance(season, int) and not isinstance(season, bool) and season > 0:
         return f"{name} · {season}"
     return name
+
+
+def model_menu_map(models):
+    labels = {}
+    for model in models:
+        base = model_display_name(model)
+        label = base
+        counter = 2
+        while label in labels:
+            label = f"{base} ({counter})"
+            counter += 1
+        labels[label] = model["id"]
+    return labels
+
+
+MIN_SEASON = 1900
+MAX_SEASON = 2100
+
+
+def parse_season(text):
+    text = str(text or "").strip()
+    if not text:
+        return None
+    if not (text.isascii() and text.isdigit()) or not MIN_SEASON <= int(text) <= MAX_SEASON:
+        raise ValueError("Ano inválido. Use 4 dígitos, por exemplo 2026.")
+    return int(text)
