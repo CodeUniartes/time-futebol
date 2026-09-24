@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "order.schema.json",
+  "title": "Pedido do site (v1)",
+  "description": "Formato do pedido que o site envia e o Montador importa. Campos desconhecidos são ignorados por quem lê.",
+  "type": "object",
+  "required": ["schema_version", "code", "customer", "items"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "code": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "description": "ISO 8601 em UTC, com Z" },
+    "customer": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "whatsapp": { "type": "string" }
+      }
+    },
+    "note": { "type": "string" },
+    "catalog_version": { "type": "string", "description": "updated_at do catálogo de onde o pedido saiu" },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["team_id", "model_id", "category_id", "item_label", "quantity"],
+        "properties": {
+          "team_id": { "type": "string", "minLength": 1 },
+          "team_name": { "type": "string" },
+          "season": { "type": "integer" },
+          "model_id": { "type": "string", "minLength": 1 },
+          "model_name": { "type": "string" },
+          "category_id": { "type": "string", "minLength": 1 },
+          "category_name": { "type": "string" },
+          "item_label": { "type": "string", "minLength": 1 },
+          "quantity": { "type": "integer", "minimum": 1, "maximum": 999 }
+        }
+      }
+    }
+  }
+}
