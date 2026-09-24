@@ -1,5 +1,6 @@
 import copy
 import json
+import time
 from datetime import datetime, timezone
 
 import pytest
@@ -135,3 +136,26 @@ def test_update_model_can_clear_season(service, team_id):
     model = service.add_model(team_id, "Home 1", season=2026)
     updated = service.update_model(team_id, model["id"], "Home 1", "", default_features(), {}, season=None)
     assert "season" not in updated
+
+
+def test_save_catalog_writes_updated_at_in_utc(tmp_path):
+    moment = datetime(2026, 9, 24, 12, 30, 15, 123000, tzinfo=timezone.utc)
+    service = CatalogService(catalog_path=tmp_path / "catalogo.json", clock=lambda: moment)
+    service.save_catalog(service.load_catalog())
+    saved = json.loads((tmp_path / "catalogo.json").read_text(encoding="utf-8"))
+    assert saved["updated_at"] == "2026-09-24T12:30:15.123Z"
+
+
+def test_updated_at_changes_on_every_save(service):
+    service.save_catalog(service.load_catalog())
+    first = service.load_catalog()["updated_at"]
+    time.sleep(0.005)
+    service.save_catalog(service.load_catalog())
+    second = service.load_catalog()["updated_at"]
+    assert first.endswith("Z") and second.endswith("Z")
+    assert second > first
+
+
+def test_every_write_goes_through_save_catalog(service, team_id):
+    service.add_model(team_id, "Home 1")
+    assert service.load_catalog()["updated_at"].endswith("Z")

@@ -1,4 +1,5 @@
 from copy import deepcopy
+from datetime import datetime, timezone
 
 from src.models.catalog_models import (
     BLANK_CATALOG,
@@ -24,8 +25,9 @@ def _validated_season(season):
 
 
 class CatalogService:
-    def __init__(self, catalog_path=None):
+    def __init__(self, catalog_path=None, clock=None):
         self.catalog_path = catalog_path or CONFIG_DIR / "catalogo.json"
+        self.clock = clock or (lambda: datetime.now(timezone.utc))
         self.ensure_catalog_exists()
 
     def ensure_catalog_exists(self):
@@ -59,6 +61,9 @@ class CatalogService:
         data["schema_version"] = SCHEMA_VERSION
 
     def save_catalog(self, catalog):
+        catalog["updated_at"] = self.clock().astimezone(timezone.utc).isoformat(timespec="milliseconds").replace(
+            "+00:00", "Z"
+        )
         save_json(self.catalog_path, catalog)
 
     def is_configured(self):
