@@ -93,8 +93,15 @@ arte (SP2) e da tela de resumo (SP4). SP6 entra por último. Spec do SP5: `docs/
   em `wrangler secret` e `config/site.json` local); código adivinhável (mitigado por token de leitura).
 - **Retenção:** pedidos apagados (lógico) após 180 dias, decisão a confirmar no SP3.
 - **Finalizar pedido (integração com o Worker `pedido-terceiro-ca-dtf`, decisão de 2026-09-24):**
-  - Ao criar a tarefa no ClickUp, o dono põe o código `DTF-XXXXX` na **descrição** da tarefa. O Worker do ClickUp extrai
-    o código da descrição quando a tarefa é finalizada (regex do alfabeto do código; se houver mais de um, trata todos).
+  - **Como o Worker funciona hoje (lido em 2026-09-24, só consulta):** um formulário dentro do Digisac cria a tarefa no
+    ClickUp; Automations do ClickUp (etiquetas `dtf impresso` e `dtf pronto`, parâmetro `etapa`) chamam
+    `/webhooks/clickup`, que grava no D1 e enfileira; o consumidor (`readyOrder.service.ts`) move a tarefa para
+    FINALIZADO e a arquiva. Um cron diário apaga dados operacionais concluídos há mais de 30 dias.
+  - **Ponto de ligação:** logo depois de `finalizeClickUpTask` em `readyOrder.service.ts`, em modo *best-effort* (falha
+    da chamada é registrada em `integration_events` e **não** impede a finalização).
+  - **De onde vem o código:** campo novo "Código do pedido do site" no formulário do Digisac, gravado na descrição da
+    tarefa e numa coluna nova em `orders` (migration). Na finalização usa a coluna; se vazia, procura `DTF-XXXXX` na
+    descrição da tarefa (regex do alfabeto do código; se houver mais de um, trata todos).
   - A chamada é por **service binding** com RPC (`WorkerEntrypoint`): o Worker do site expõe `finishOrder(code)` sem rota
     HTTP pública, então não há endpoint exposto nem token para esse trecho. O outro Worker só ganha um binding no
     `wrangler`; nenhum código dele é alterado além da chamada.
