@@ -44,7 +44,7 @@ class PublishService:
         output_dir = self.site_config.publish_dir()
         result = PublishResult(output_dir=output_dir)
         catalog = self._catalog_with_version()
-        plan = self._plan(catalog)
+        plan = self._plan(catalog, result.warnings)
         run = _Run(
             service=self,
             output_dir=output_dir,
@@ -75,14 +75,14 @@ class PublishService:
         raw = f"{GENERATOR_VERSION}|{self.site_config.preview_max_side()}|{watermark}"
         return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
 
-    def _plan(self, catalog):
+    def _plan(self, catalog, warnings):
         plan = _Plan()
         for team in catalog.get("teams", []):
             for model in team.get("models", []):
                 if not model.get("active", True):
                     continue
                 for category in model.get("categories", []):
-                    entry = _category_plan(team, model, category)
+                    entry = _category_plan(team, model, category, warnings)
                     if entry:
                         plan.categories.append(entry)
         return plan
@@ -106,11 +106,16 @@ class _Plan:
     categories: list = field(default_factory=list)
 
 
-def _category_plan(team, model, category):
+def _category_plan(team, model, category, warnings):
     if not category.get("enabled", True):
         return None
+    where = f"{team.get('name', team['id'])} / {model.get('name', model['id'])} / {category.get('name', category['id'])}"
     folder = category.get("folder_path") or ""
-    if not folder or not Path(folder).is_dir():
+    if not folder:
+        warnings.append(f"{where}: categoria sem pasta configurada.")
+        return None
+    if not Path(folder).is_dir():
+        warnings.append(f"{where}: pasta não encontrada: {folder}")
         return None
     all_files_type = category.get("type") == "all_files_from_folder"
     labeled = []
@@ -122,6 +127,7 @@ def _category_plan(team, model, category):
     if all_files_type or category.get("quick_action_all_files"):
         all_files = accepted_files(folder, category.get("extensions"))
     if not labeled and not all_files:
+        warnings.append(f"{where}: nenhum arquivo .tif encontrado em {folder}")
         return None
     return _CategoryPlan(team=team, model=model, category=category, labeled=labeled, all_files=all_files)
 

@@ -121,8 +121,9 @@ class PublishWindow(ctk.CTkToplevel):
             f"Prévias geradas: {result.generated} | reaproveitadas: {result.reused}",
             f"Falhas: {len(result.failures)} | Avisos: {len(result.warnings)}",
         ]
-        lines += [f"- {failure}" for failure in result.failures[:8]]
-        if len(result.failures) > 8:
+        lines += [f"- Falha: {failure}" for failure in result.failures[:5]]
+        lines += [f"- Aviso: {warning}" for warning in result.warnings[:5]]
+        if len(result.failures) > 5 or len(result.warnings) > 5:
             lines.append("... veja o relatório completo.")
         self.write_summary("\n".join(lines))
 

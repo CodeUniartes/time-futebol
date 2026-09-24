@@ -336,3 +336,23 @@ def test_changing_one_file_regenerates_the_all_files_item(env):
     result = env["service"].publish()
     assert (result.generated, result.reused) == (2, 1)
     assert items_of(published(env), "fila_completa_letras")[-1]["pieces"][1]["width_cm"] == 6.8
+
+
+def test_missing_folder_is_reported_not_silent(env):
+    add_shirt(env, [numbers_category(env["tmp"] / "nao_existe")])
+    result = env["service"].publish()
+    assert any("pasta não encontrada" in warning and "nao_existe" in warning for warning in result.warnings)
+
+
+def test_empty_folder_and_missing_path_are_reported(env):
+    (env["tmp"] / "vazia").mkdir()
+    add_shirt(env, [numbers_category(env["tmp"] / "vazia"), make_category("logos", "")])
+    result = env["service"].publish()
+    assert any("nenhum arquivo" in warning for warning in result.warnings)
+    assert any("sem pasta configurada" in warning for warning in result.warnings)
+
+
+def test_disabled_category_and_inactive_shirt_do_not_warn(env):
+    add_shirt(env, [numbers_category(env["tmp"] / "nao_existe", enabled=False)])
+    add_shirt(env, [numbers_category(env["tmp"] / "outra")], active=False, model_id="inativa")
+    assert env["service"].publish().warnings == []
