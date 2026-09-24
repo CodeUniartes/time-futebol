@@ -11,6 +11,7 @@ FEATURE_DEFINITIONS = [
 ]
 
 ALL_FILES_LABEL = "Todos os arquivos"
+SCHEMA_VERSION = 2
 
 
 CATEGORY_DEFINITIONS = {
@@ -82,7 +83,7 @@ CATEGORY_DEFINITIONS = {
 
 
 BLANK_CATALOG = {
-    "schema_version": 1,
+    "schema_version": SCHEMA_VERSION,
     "configured": False,
     "settings": {
         "default_output_folder": "",
@@ -139,3 +140,11 @@ def categories_for_features(features, folder_paths=None):
 
 def category_label(category_id):
     return CATEGORY_DEFINITIONS.get(category_id, {}).get("name", category_id)
+
+
+def model_display_name(model):
+    name = model.get("name", "")
+    season = model.get("season")
+    if isinstance(season, int) and not isinstance(season, bool) and season > 0:
+        return f"{name} · {season}"
+    return name
