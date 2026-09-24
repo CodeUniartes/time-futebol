@@ -11,6 +11,7 @@ from src.ui.theme import (
     CARD_BG,
     CARD_BORDER,
     GRAPHITE,
+    GRAPHITE_SOFT,
     MUTED,
     ON_DARK,
     ON_DARK_MUTED,
@@ -110,25 +111,28 @@ class MainWindow(ctk.CTk):
         )
 
     def toolbar_button(self, parent, column, icon, text, command):
-        cell = ctk.CTkFrame(parent, fg_color=GRAPHITE, corner_radius=0, width=116, height=80)
+        cell = ctk.CTkFrame(parent, fg_color=GRAPHITE, corner_radius=0, width=126, height=80)
         cell.grid(row=0, column=column, sticky="nsew")
         cell.grid_propagate(False)
+        cell.grid_columnconfigure(0, weight=1)
         cell.grid_rowconfigure(0, weight=1)
         cell.grid_rowconfigure(1, weight=1)
+        if column > 0:
+            ctk.CTkFrame(cell, width=1, height=44, fg_color=GRAPHITE_SOFT, corner_radius=0).place(x=0, rely=0.5, anchor="w")
         icon_label = ctk.CTkLabel(
             cell,
             text=icon,
             font=ctk.CTkFont(family="Segoe MDL2 Assets", size=25),
             text_color=ON_DARK,
         )
-        icon_label.grid(row=0, column=0, pady=(8, 0), padx=20)
+        icon_label.grid(row=0, column=0, pady=(8, 0), padx=4)
         text_label = ctk.CTkLabel(
             cell,
             text=text,
             font=font(13),
             text_color=ON_DARK,
         )
-        text_label.grid(row=1, column=0, pady=(0, 8), padx=20)
+        text_label.grid(row=1, column=0, pady=(0, 8), padx=4)
         for widget in (cell, icon_label, text_label):
             widget.bind("<Button-1>", lambda _event, callback=command: callback())
             widget.bind("<Enter>", lambda _event, frame=cell: frame.configure(fg_color=ORANGE_DARK))
