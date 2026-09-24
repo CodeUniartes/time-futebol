@@ -4,6 +4,8 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
+from src.models.catalog_models import ALL_FILES_LABEL
+
 CONTRACTS_DIR = Path(__file__).resolve().parents[1] / "contracts"
 
 
@@ -70,3 +72,70 @@ def test_order_schema_rejects_unknown_version(order_validator):
     order = valid_order()
     order["schema_version"] = 2
     assert list(order_validator.iter_errors(order))
+
+
+@pytest.fixture
+def catalog_validator():
+    schema = load("catalog.public.schema.json")
+    Draft202012Validator.check_schema(schema)
+    return Draft202012Validator(schema)
+
+
+def all_items(catalog):
+    for team in catalog["teams"]:
+        for model in team["models"]:
+            for category in model["categories"]:
+                for item in category["items"]:
+                    yield category, item
+
+
+def test_public_catalog_example_matches_schema(catalog_validator):
+    assert list(catalog_validator.iter_errors(load("catalog.public.example.json"))) == []
+
+
+def test_public_catalog_example_has_versions_and_an_item():
+    catalog = load("catalog.public.example.json")
+    assert catalog["schema_version"] == 1
+    assert catalog["catalog_version"].endswith("Z")
+    assert next(all_items(catalog), None) is not None
+
+
+def test_public_catalog_example_shows_size_and_all_files_item():
+    catalog = load("catalog.public.example.json")
+    assert any("width_cm" in item and "height_cm" in item for _category, item in all_items(catalog))
+    all_files = [category for category, _item in all_items(catalog) if category.get("all_files_option")]
+    assert all_files
+    assert all(item["label"] == ALL_FILES_LABEL for category in all_files for item in category["items"])
+
+
+def test_public_catalog_previews_are_relative_webp_paths():
+    for _category, item in all_items(load("catalog.public.example.json")):
+        assert item["preview"].startswith("previews/")
+        assert item["preview"].endswith(".webp")
+        assert ".." not in item["preview"]
+
+
+@pytest.mark.parametrize("missing", ["schema_version", "catalog_version", "teams"])
+def test_public_catalog_schema_requires_root_fields(catalog_validator, missing):
+    catalog = load("catalog.public.example.json")
+    del catalog[missing]
+    assert list(catalog_validator.iter_errors(catalog))
+
+
+def test_public_catalog_schema_rejects_non_positive_size(catalog_validator):
+    catalog = load("catalog.public.example.json")
+    next(all_items(catalog))[1]["width_cm"] = 0
+    assert list(catalog_validator.iter_errors(catalog))
+
+
+def test_public_catalog_schema_accepts_unknown_fields(catalog_validator):
+    catalog = load("catalog.public.example.json")
+    catalog["foo"] = 1
+    next(all_items(catalog))[1]["bar"] = 2
+    assert list(catalog_validator.iter_errors(catalog)) == []
+
+
+def test_contracts_readme_documents_versioning():
+    text = (CONTRACTS_DIR / "README.md").read_text(encoding="utf-8")
+    assert "schema_version" in text
+    assert "opcional" in text
