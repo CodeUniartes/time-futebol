@@ -12,6 +12,17 @@ from src.utils.path_utils import CONFIG_DIR
 from src.utils.text_utils import slugify
 
 
+_UNSET = object()
+
+
+def _validated_season(season):
+    if season is None:
+        return None
+    if isinstance(season, bool) or not isinstance(season, int):
+        raise ValueError("Ano inválido.")
+    return season
+
+
 class CatalogService:
     def __init__(self, catalog_path=None):
         self.catalog_path = catalog_path or CONFIG_DIR / "catalogo.json"
@@ -120,26 +131,37 @@ class CatalogService:
         self.save_catalog(catalog)
         return team
 
-    def add_model(self, team_id, name, description="", features=None, folder_paths=None):
+    def add_model(
+        self, team_id, name, description="", features=None, folder_paths=None, season=None, active=True
+    ):
+        season = _validated_season(season)
         catalog = self.load_catalog()
         for team in catalog.get("teams", []):
             if team.get("id") == team_id:
                 existing_ids = {model.get("id") for model in team.get("models", [])}
                 features = {**default_features(), **(features or {})}
+                id_base = f"{name} {season}" if season else name
                 model = {
-                    "id": self.unique_id(name, existing_ids),
+                    "id": self.unique_id(id_base, existing_ids),
                     "name": name.strip(),
                     "description": description.strip(),
                     "features": features,
                     "categories": categories_for_features(features, folder_paths or {}),
+                    "active": bool(active),
                 }
+                if season:
+                    model["season"] = season
                 team.setdefault("models", []).append(model)
                 catalog["configured"] = True
                 self.save_catalog(catalog)
                 return model
         return None
 
-    def update_model(self, team_id, model_id, name, description, features, folder_paths):
+    def update_model(
+        self, team_id, model_id, name, description, features, folder_paths, season=_UNSET, active=_UNSET
+    ):
+        if season is not _UNSET:
+            season = _validated_season(season)
         catalog = self.load_catalog()
         for team in catalog.get("teams", []):
             if team.get("id") != team_id:
@@ -150,6 +172,13 @@ class CatalogService:
                     model["description"] = description.strip()
                     model["features"] = {**default_features(), **features}
                     model["categories"] = categories_for_features(model["features"], folder_paths)
+                    if season is not _UNSET:
+                        if season:
+                            model["season"] = season
+                        else:
+                            model.pop("season", None)
+                    if active is not _UNSET:
+                        model["active"] = bool(active)
                     catalog["configured"] = True
                     self.save_catalog(catalog)
                     return model
