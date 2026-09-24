@@ -306,3 +306,33 @@ def test_progress_reaches_total_even_when_a_file_fails(env):
     calls = []
     env["service"].publish(progress=lambda done, total, message: calls.append((done, total)))
     assert calls[-1] == (2, 2)
+
+
+def test_second_run_does_not_read_any_tiff_again(env, monkeypatch):
+    folder = env["tmp"] / "fila"
+    make_tif(folder / "A Galo.tif")
+    make_tif(folder / "B Galo.tif")
+    add_shirt(env, [make_category("fila_completa_letras", str(folder))])
+    env["service"].publish()
+
+    from src.services import publish_service
+
+    reads = []
+    original = publish_service.read_tiff
+    monkeypatch.setattr(publish_service, "read_tiff", lambda path: reads.append(path) or original(path))
+    result = env["service"].publish()
+    assert reads == []
+    assert (result.generated, result.reused) == (0, 3)
+
+
+def test_changing_one_file_regenerates_the_all_files_item(env):
+    folder = env["tmp"] / "fila"
+    make_tif(folder / "A Galo.tif")
+    make_tif(folder / "B Galo.tif")
+    add_shirt(env, [make_category("fila_completa_letras", str(folder))])
+    env["service"].publish()
+    make_tif(folder / "B Galo.tif", width=800, height=900)
+    os.utime(folder / "B Galo.tif", (1_900_000_000, 1_900_000_000))
+    result = env["service"].publish()
+    assert (result.generated, result.reused) == (2, 1)
+    assert items_of(published(env), "fila_completa_letras")[-1]["pieces"][1]["width_cm"] == 6.8

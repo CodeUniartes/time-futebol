@@ -201,34 +201,42 @@ class _Run:
         return {"label": label, "preview": relative, "width_cm": measures["width_cm"], "height_cm": measures["height_cm"]}
 
     def _all_files_item(self, base, files, used_names):
-        pieces, images, keys = [], [], []
-        failed = False
+        relative = self._unique_relative(base, ALL_FILES_FALLBACK_SLUG, used_names)
+        combined = "|".join(f"{path}:{self._file_key(path)}" for path in files)
+        cache_key = hashlib.sha1(combined.encode("utf-8")).hexdigest()
+        previous = self.old_cache.get(relative)
+        target = self.output_dir / relative
+
+        if previous and previous.get("key") == cache_key and previous.get("pieces") and target.exists():
+            for path, piece in zip(files, previous["pieces"]):
+                self._check_cancel()
+                self._check_size(Path(path).stem, path, piece)
+                self._tick(path)
+            self.new_cache[relative] = previous
+            self.keep_previews.add(relative)
+            self.result.reused += 1
+            return {"label": ALL_FILES_LABEL, "preview": relative, "pieces": previous["pieces"]}
+
+        pieces, images, failed = [], [], False
         for path in files:
             self._check_cancel()
             try:
-                image, measures, key = self._measure_file(path)
+                image, measures, _key = self._measure_file(path)
             except (TiffReadError, _PreviewSkipped) as error:
                 self._fail(path, error)
                 failed = True
                 self._tick(path)
                 continue
-            self._check_size(path.stem, path, measures)
+            self._check_size(Path(path).stem, path, measures)
             pieces.append({"width_cm": measures["width_cm"], "height_cm": measures["height_cm"]})
             images.append(image)
-            keys.append(key)
             self._tick(path)
         if not pieces:
             return None
-        relative = self._unique_relative(base, ALL_FILES_FALLBACK_SLUG, used_names)
-        cache_key = hashlib.sha1("|".join(keys).encode("utf-8")).hexdigest()
-        previous = self.old_cache.get(relative)
-        target = self.output_dir / relative
-        if previous and previous.get("key") == cache_key and target.exists() and not failed:
-            self.result.reused += 1
-        else:
-            save_webp(contact_sheet(images, self.max_side), target)
-            self.result.generated += 1
-        self.new_cache[relative] = {"key": cache_key}
+        save_webp(contact_sheet(images, self.max_side), target)
+        self.result.generated += 1
+        if not failed:
+            self.new_cache[relative] = {"key": cache_key, "pieces": pieces}
         self.keep_previews.add(relative)
         return {"label": ALL_FILES_LABEL, "preview": relative, "pieces": pieces}
 
