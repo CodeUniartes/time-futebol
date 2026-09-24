@@ -24,3 +24,4 @@ andam juntos.
 - `order.layout`: painel de impressão calculado no site (páginas e posições das artes). Só informativo; a produção
   recalcula. Ver `docs/superpowers/specs/2026-09-24-painel-previa-impressao-design.md`.
 - `catalog.public` `items[].width_cm` e `height_cm`: tamanho real da área com tinta, usado pelo painel.
+- `catalog.public` `items[].pieces`: medidas de cada arquivo de um item "Todos os arquivos" (então o item não tem `width_cm`/`height_cm`).

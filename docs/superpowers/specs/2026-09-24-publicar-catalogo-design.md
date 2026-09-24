@@ -37,7 +37,7 @@ interromper o resto. Com o catálogo real (505 `.tif`), a primeira geração ter
 | Área útil | Retângulo que contém tudo com alfa acima de um limiar (8 de 255); margem transparente é descartada |
 | Tamanho físico | `largura_px ÷ dpi × 2,54` e `altura_px ÷ dpi × 2,54` sobre a área útil, arredondado a 0,1 cm. Sem dpi gravado: assume 300 e registra aviso |
 | Prévia | Lado maior de 400 px, `.webp`, qualidade 80, sem ampliar arte menor que isso |
-| Marca d'água | Texto repetido na diagonal, cinza, baixa opacidade, só na prévia. Texto, opacidade e ângulo em `config/site.json` (padrão: `UNIARTES`) |
+| Marca d'água | Texto repetido na diagonal, cinza, baixa opacidade, só na prévia. Texto, opacidade e ângulo em `config/site.json` (padrão: `UNIARTES`, confirmado pelo dono) |
 | Filtros | Só camisas `active`, categorias `enabled` com pasta existente, itens vindos de `list_available_items` |
 | `catalog_version` | O `updated_at` do catálogo (SP1). Se ainda não existir, grava o catálogo uma vez antes |
 | Falha em um arquivo | O item é omitido, entra no relatório com o motivo e o resto continua |
@@ -117,10 +117,8 @@ thread) e botão de cancelar. Toda a lógica fica em `services/` e `utils/`, tes
 
 ## Riscos e pontos em aberto
 
-1. **Cores de letras e números em subpastas.** No catálogo real, letras do Cruzeiro estão em `AZUL`, `BRANCO`, `MARROM`, e
-   o Montador hoje lê **uma pasta por categoria**, sem subpastas. O site precisa oferecer a **cor** da letra. Decisão
-   necessária: cada cor vira uma categoria própria ("Letras — Azul") ou o modelo ganha o conceito de *variante de cor*.
-   Recomendo a segunda, mas é uma mudança de modelo que merece spec própria antes da 2A publicar esses casos.
+1. **Cores (resolvido em 2026-09-24):** cada camisa tem uma só cor, então cada cor (Azul, Branco, Marrom) é uma **versão** da
+   camisa com as suas próprias categorias e pastas. O modelo Time → Ano → Versão → Categorias já cobre isso; não há variante de cor.
 2. **Nomes de arquivo** como `JOSÉ SOARES.tif` na pasta de números (arte de nome) não casam com a regra de dígitos e ficam
    de fora da categoria; hoje já é assim no Montador.
 3. **Fidelidade de cor** da prévia (CMYK convertido) é aproximada: o texto do site deve dizer "prévia ilustrativa".

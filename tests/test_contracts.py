@@ -139,3 +139,19 @@ def test_contracts_readme_documents_versioning():
     text = (CONTRACTS_DIR / "README.md").read_text(encoding="utf-8")
     assert "schema_version" in text
     assert "opcional" in text
+
+
+def test_public_catalog_example_all_files_item_uses_pieces():
+    catalog = load("catalog.public.example.json")
+    for category, item in all_items(catalog):
+        if category.get("all_files_option"):
+            assert len(item["pieces"]) >= 2
+            assert "width_cm" not in item and "height_cm" not in item
+
+
+@pytest.mark.parametrize("pieces", [[], [{"width_cm": 0, "height_cm": 5}], [{"width_cm": 5}]])
+def test_public_catalog_schema_rejects_invalid_pieces(catalog_validator, pieces):
+    catalog = load("catalog.public.example.json")
+    item = next(item for category, item in all_items(catalog) if category.get("all_files_option"))
+    item["pieces"] = pieces
+    assert list(catalog_validator.iter_errors(catalog))

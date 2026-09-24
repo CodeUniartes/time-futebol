@@ -52,7 +52,20 @@
                               "description": "Caminho relativo: previews/<time>/<camisa>/<categoria>/<item>.webp"
                             },
                             "width_cm": { "type": "number", "exclusiveMinimum": 0, "description": "Largura real da área com tinta" },
-                            "height_cm": { "type": "number", "exclusiveMinimum": 0, "description": "Altura real da área com tinta" }
+                            "height_cm": { "type": "number", "exclusiveMinimum": 0, "description": "Altura real da área com tinta" },
+                            "pieces": {
+                              "type": "array",
+                              "minItems": 1,
+                              "description": "Item de vários arquivos (Todos os arquivos): medidas de cada peça; width_cm e height_cm do item ficam ausentes",
+                              "items": {
+                                "type": "object",
+                                "required": ["width_cm", "height_cm"],
+                                "properties": {
+                                  "width_cm": { "type": "number", "exclusiveMinimum": 0 },
+                                  "height_cm": { "type": "number", "exclusiveMinimum": 0 }
+                                }
+                              }
+                            }
                           }
                         }
                       }

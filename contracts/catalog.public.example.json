@@ -43,8 +43,10 @@
                 {
                   "label": "Todos os arquivos",
                   "preview": "previews/atletico_mineiro/home_1_2026/camisa_completa/todos.webp",
-                  "width_cm": 58.0,
-                  "height_cm": 71.5
+                  "pieces": [
+                    { "width_cm": 48.0, "height_cm": 58.0 },
+                    { "width_cm": 12.0, "height_cm": 6.0 }
+                  ]
                 }
               ]
             }
