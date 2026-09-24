@@ -1,0 +1,23 @@
+{
+  "name": "pedido-dtf-site-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API do site de pedidos DTF da Uniartes (Cloudflare Worker + D1 + R2)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "vitest run",
+    "typecheck": "wrangler types && tsc --noEmit",
+    "types": "wrangler types"
+  },
+  "dependencies": {
+    "@cfworker/json-schema": "^4.1.1",
+    "hono": "^4.13.9"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.138.0"
+  }
+}

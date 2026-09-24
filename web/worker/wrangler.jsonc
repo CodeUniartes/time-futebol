@@ -1,0 +1,19 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "pedido-dtf-site",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-08-12",
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": { "enabled": true },
+	// IDs de placeholder: os reais entram na fase 6 do plano (criação na conta da Cloudflare), nunca segredos aqui.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "pedido-dtf-site-db",
+			"database_id": "00000000-0000-0000-0000-000000000000",
+			"migrations_dir": "migrations"
+		}
+	],
+	"r2_buckets": [{ "binding": "FILES", "bucket_name": "pedido-dtf-site-files" }],
+	// Segredos (wrangler secret put): ADMIN_TOKEN, READER_TOKEN, TURNSTILE_SECRET
+}
