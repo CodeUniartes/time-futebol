@@ -6,7 +6,7 @@ from src.services.background_publish import BackgroundPublish
 from src.services.publish_service import REPORT_FILE, PublishService
 from src.services.site_config_service import SiteConfigService
 from src.ui.assets import apply_app_icon
-from src.ui.theme import MUTED, TEXT, button_style
+from src.ui.theme import GRAPHITE, MUTED, TEXT, button_style, font
 
 POLL_MS = 100
 
@@ -19,8 +19,8 @@ class PublishWindow(ctk.CTkToplevel):
         self.output_dir = self.site_config.publish_dir()
 
         self.title("Publicar Catálogo")
-        self.geometry("640x430")
-        self.minsize(560, 400)
+        self.geometry("760x450")
+        self.minsize(700, 420)
         apply_app_icon(self)
         self.grab_set()
         self.protocol("WM_DELETE_WINDOW", self.close)
@@ -31,7 +31,7 @@ class PublishWindow(ctk.CTkToplevel):
         frame.pack(fill="both", expand=True, padx=18, pady=18)
         frame.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(frame, text="Publicar Catálogo", font=ctk.CTkFont(size=22, weight="bold"), text_color=TEXT).grid(
+        ctk.CTkLabel(frame, text="Publicar Catálogo", font=font(22, "bold", "italic", brand=True), text_color=GRAPHITE).grid(
             row=0, column=0, sticky="w", padx=14, pady=(14, 4)
         )
         ctk.CTkLabel(
@@ -40,11 +40,11 @@ class PublishWindow(ctk.CTkToplevel):
                 "Gera o catálogo público e as prévias (imagens leves com marca d'água) das camisas ativas. "
                 "Os arquivos .tif originais não são alterados nem enviados."
             ),
-            wraplength=560,
+            wraplength=680,
             justify="left",
             text_color=MUTED,
         ).grid(row=1, column=0, sticky="w", padx=14, pady=(0, 10))
-        ctk.CTkLabel(frame, text=f"Pasta de saída: {self.output_dir}", wraplength=560, justify="left", text_color=MUTED).grid(
+        ctk.CTkLabel(frame, text=f"Pasta de saída: {self.output_dir}", wraplength=680, justify="left", text_color=MUTED).grid(
             row=2, column=0, sticky="w", padx=14, pady=(0, 12)
         )
 
@@ -61,7 +61,7 @@ class PublishWindow(ctk.CTkToplevel):
         buttons = ctk.CTkFrame(frame, fg_color="white")
         buttons.grid(row=6, column=0, sticky="ew", padx=14, pady=(0, 14))
         buttons.grid_columnconfigure(0, weight=1)
-        self.start_button = ctk.CTkButton(buttons, text="Gerar catálogo", command=self.start, **button_style("primary"))
+        self.start_button = ctk.CTkButton(buttons, text="Gerar catálogo", command=self.start, **button_style("cta"))
         self.start_button.grid(row=0, column=1, padx=6)
         self.cancel_button = ctk.CTkButton(
             buttons, text="Cancelar", command=self.cancel, state="disabled", **button_style("warning")

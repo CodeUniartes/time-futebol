@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk
 
-from src.ui.theme import CARD_BG, CARD_BORDER, DANGER_RED, TABLE_HEADER, TEXT, button_style
+from src.ui.theme import CARD_BG, CARD_BORDER, ORANGE_DARK, SURFACE_ALT, TEXT, apply_table_style, button_style, font
 
 
 class CartPanel(ctk.CTkFrame):
@@ -19,22 +19,22 @@ class CartPanel(ctk.CTkFrame):
         ctk.CTkLabel(
             head,
             text="CARRINHO DO PEDIDO",
-            font=ctk.CTkFont(size=18, weight="bold"),
+            font=font(18, "bold"),
             text_color=TEXT,
         ).grid(row=0, column=0, sticky="w")
         self.badge = ctk.CTkLabel(
             head,
             text="0 itens",
-            fg_color=DANGER_RED,
+            fg_color=ORANGE_DARK,
             text_color="white",
             corner_radius=13,
             padx=12,
             pady=3,
-            font=ctk.CTkFont(size=12, weight="bold"),
+            font=font(12, "bold"),
         )
         self.badge.grid(row=0, column=1, sticky="e")
 
-        table_frame = ctk.CTkFrame(self, fg_color=CARD_BG, border_width=1, border_color="#dce5ef", corner_radius=7)
+        table_frame = ctk.CTkFrame(self, fg_color=CARD_BG, border_width=1, border_color=CARD_BORDER, corner_radius=8)
         table_frame.grid(row=1, column=0, sticky="nsew", padx=12, pady=6)
         table_frame.grid_columnconfigure(0, weight=1)
         table_frame.grid_rowconfigure(0, weight=1)
@@ -44,24 +44,7 @@ class CartPanel(ctk.CTkFrame):
             style.theme_use("clam")
         except Exception:
             pass
-        style.configure(
-            "Cart.Treeview",
-            rowheight=30,
-            font=("Segoe UI", 10),
-            background="#ffffff",
-            fieldbackground="#ffffff",
-            foreground="#111827",
-            borderwidth=0,
-        )
-        style.configure(
-            "Cart.Treeview.Heading",
-            font=("Segoe UI", 10, "bold"),
-            background=TABLE_HEADER,
-            foreground="#111827",
-            borderwidth=1,
-            relief="flat",
-        )
-        style.map("Cart.Treeview", background=[("selected", "#dbeafe")], foreground=[("selected", "#111827")])
+        apply_table_style(style)
 
         self.tree = ttk.Treeview(
             table_frame,
@@ -77,19 +60,19 @@ class CartPanel(ctk.CTkFrame):
         self.tree.heading("quantity", text="Quantidade")
         self.tree.heading("actions", text="Ações")
         self.tree.column("idx", width=42, anchor="center", stretch=False)
-        self.tree.column("source", width=155)
-        self.tree.column("category", width=135)
-        self.tree.column("item", width=120)
-        self.tree.column("quantity", width=82, anchor="center", stretch=False)
-        self.tree.column("actions", width=88, anchor="center", stretch=False)
+        self.tree.column("source", width=190)
+        self.tree.column("category", width=115)
+        self.tree.column("item", width=80)
+        self.tree.column("quantity", width=98, anchor="center", stretch=False)
+        self.tree.column("actions", width=130, anchor="center", stretch=False)
         self.tree.grid(row=0, column=0, sticky="nsew")
-        self.tree.tag_configure("odd", background="#ffffff")
-        self.tree.tag_configure("even", background="#f8fbff")
+        self.tree.tag_configure("odd", background=CARD_BG)
+        self.tree.tag_configure("even", background=SURFACE_ALT)
         scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
         self.tree.configure(yscrollcommand=scrollbar.set)
 
-        footer = ctk.CTkFrame(self, fg_color="#f8fafc", corner_radius=7)
+        footer = ctk.CTkFrame(self, fg_color=SURFACE_ALT, corner_radius=8)
         footer.grid(row=2, column=0, sticky="ew", padx=12, pady=(6, 12))
         footer.grid_columnconfigure(1, weight=1)
         self.total_label = ctk.CTkLabel(
@@ -97,7 +80,7 @@ class CartPanel(ctk.CTkFrame):
             text="Total de itens: 0\nTotal de quantidades: 0",
             justify="left",
             text_color=TEXT,
-            font=ctk.CTkFont(size=13, weight="bold"),
+            font=font(14, "bold"),
         )
         self.total_label.grid(row=0, column=0, sticky="w", padx=14, pady=12)
         ctk.CTkButton(

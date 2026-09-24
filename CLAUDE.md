@@ -36,6 +36,7 @@ Fluxo: `OrderPanel` -> `CartService` (itens) -> `ValidationService` -> `FileServ
 - `save_catalog` grava `updated_at` (UTC, `Z`): é o `catalog_version` que o site vai carregar nos pedidos.
 - Pedido do site: `order_import_service.parse_site_order(dict, catalog)` (não sabe a origem do JSON) devolve `payload` para `OrderPanel.load_order_payload` + `warnings`. Ignora campos desconhecidos; contrato em `contracts/order.schema.json`.
 - Contratos: campo novo opcional mantém `schema_version`; o que quebra leitor antigo cria versão nova. `config/site.json` (tokens) é ignorado pelo git.
+- UI: cores e fontes só vêm de `src/ui/theme.py` (marca em `docs/brand.md`). Botão de ação = grafite; botão que conclui (gerar/salvar) = `cta` (laranja escuro). Nunca texto branco sobre o laranja puro `#F47726` (2,8:1). `tests/test_theme.py` guarda os contrastes.
 - Roadmap (SP2 publicar catálogo, SP3 API, SP4 site, SP5 painel de prévia, SP6 upload): `docs/roadmap.md`.
 
 ## Fluxo de trabalho

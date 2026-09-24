@@ -1,5 +1,6 @@
 import customtkinter as ctk
 
+from src.ui.theme import GRAPHITE, TEXT
 from src.ui.assets import apply_app_icon, maximize_window
 
 
@@ -57,11 +58,11 @@ class HelpWindow(ctk.CTkToplevel):
             frame,
             text="Como preparar as pastas",
             font=ctk.CTkFont(size=22, weight="bold"),
-            text_color="#0b3970",
+            text_color=GRAPHITE,
         )
         label.pack(anchor="w", padx=18, pady=(18, 8))
 
-        box = ctk.CTkTextbox(frame, wrap="word", font=ctk.CTkFont(size=15), text_color="#111827")
+        box = ctk.CTkTextbox(frame, wrap="word", font=ctk.CTkFont(size=15), text_color=TEXT)
         box.pack(fill="both", expand=True, padx=18, pady=(0, 18))
         box.insert("1.0", HELP_TEXT.strip())
         box.configure(state="disabled")

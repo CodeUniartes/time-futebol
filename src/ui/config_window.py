@@ -15,6 +15,21 @@ from src.services.validation_service import ValidationService
 from src.ui.assets import apply_app_icon, maximize_window
 from src.ui.help_window import HelpWindow
 from src.ui.publish_window import PublishWindow
+from src.ui.theme import (
+    APP_BG,
+    CARD_BG,
+    CARD_BORDER,
+    GRAPHITE,
+    MUTED,
+    ON_DARK,
+    ON_DARK_MUTED,
+    ORANGE,
+    ORANGE_DARK,
+    SURFACE_ALT,
+    TEXT,
+    button_style,
+    font,
+)
 
 
 class ConfigWindow(ctk.CTkToplevel):
@@ -52,26 +67,27 @@ class ConfigWindow(ctk.CTkToplevel):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        header = ctk.CTkFrame(self, fg_color="#0b3970", corner_radius=0)
+        header = ctk.CTkFrame(self, fg_color=GRAPHITE, corner_radius=0)
         header.grid(row=0, column=0, sticky="ew")
+        ctk.CTkFrame(header, fg_color=ORANGE, corner_radius=0, height=4).pack(side="bottom", fill="x")
         ctk.CTkLabel(
             header,
             text="Configurações",
-            font=ctk.CTkFont(size=24, weight="bold"),
-            text_color="white",
+            font=font(24, "bold", "italic", brand=True),
+            text_color=ON_DARK,
         ).pack(anchor="w", padx=22, pady=(16, 2))
         ctk.CTkLabel(
             header,
             text="Cadastre times, camisas e pastas sem editar código.",
-            text_color="#dbeafe",
+            text_color=ON_DARK_MUTED,
         ).pack(anchor="w", padx=22, pady=(0, 16))
 
-        body = ctk.CTkFrame(self, fg_color="#eef4fb")
+        body = ctk.CTkFrame(self, fg_color=APP_BG)
         body.grid(row=1, column=0, sticky="nsew")
         body.grid_columnconfigure(1, weight=1)
         body.grid_rowconfigure(0, weight=1)
 
-        sidebar = ctk.CTkFrame(body, fg_color="white", width=280)
+        sidebar = ctk.CTkFrame(body, fg_color=CARD_BG, width=280, corner_radius=10, border_width=1, border_color=CARD_BORDER)
         sidebar.grid(row=0, column=0, sticky="ns", padx=(14, 8), pady=14)
         sidebar.grid_propagate(False)
         sidebar.grid_columnconfigure(0, weight=1)
@@ -81,7 +97,7 @@ class ConfigWindow(ctk.CTkToplevel):
         )
         self.team_menu = ctk.CTkOptionMenu(sidebar, variable=self.team_var, values=[""], command=self.on_team_change)
         self.team_menu.grid(row=1, column=0, sticky="ew", padx=14, pady=4)
-        ctk.CTkButton(sidebar, text="+ Novo Time", command=self.add_team).grid(
+        ctk.CTkButton(sidebar, text="+ Novo Time", command=self.add_team, **button_style("outline")).grid(
             row=2, column=0, sticky="ew", padx=14, pady=(4, 16)
         )
 
@@ -90,24 +106,24 @@ class ConfigWindow(ctk.CTkToplevel):
         )
         self.model_menu = ctk.CTkOptionMenu(sidebar, variable=self.model_var, values=[""], command=self.on_model_change)
         self.model_menu.grid(row=4, column=0, sticky="ew", padx=14, pady=4)
-        ctk.CTkButton(sidebar, text="+ Nova Camisa", command=self.add_model).grid(
+        ctk.CTkButton(sidebar, text="+ Nova Camisa", command=self.add_model, **button_style("outline")).grid(
             row=5, column=0, sticky="ew", padx=14, pady=(4, 16)
         )
 
-        ctk.CTkButton(sidebar, text="Ajuda", fg_color="#475569", command=lambda: HelpWindow(self)).grid(
+        ctk.CTkButton(sidebar, text="Ajuda", command=lambda: HelpWindow(self), **button_style("muted")).grid(
             row=6, column=0, sticky="ew", padx=14, pady=4
         )
-        ctk.CTkButton(sidebar, text="Fazer backup", fg_color="#0f766e", command=self.create_backup).grid(
+        ctk.CTkButton(sidebar, text="Fazer backup", command=self.create_backup, **button_style("muted")).grid(
             row=7, column=0, sticky="ew", padx=14, pady=4
         )
-        ctk.CTkButton(sidebar, text="Restaurar backup", fg_color="#7c3aed", command=self.restore_backup).grid(
+        ctk.CTkButton(sidebar, text="Restaurar backup", command=self.restore_backup, **button_style("muted")).grid(
             row=8, column=0, sticky="ew", padx=14, pady=4
         )
-        ctk.CTkButton(sidebar, text="Editar JSON avançado", fg_color="#92400e", command=self.open_advanced_json).grid(
+        ctk.CTkButton(sidebar, text="Editar JSON avançado", command=self.open_advanced_json, **button_style("warning")).grid(
             row=9, column=0, sticky="ew", padx=14, pady=4
         )
 
-        self.form = ctk.CTkScrollableFrame(body, fg_color="white")
+        self.form = ctk.CTkScrollableFrame(body, fg_color=CARD_BG, corner_radius=10, border_width=1, border_color=CARD_BORDER)
         self.form.grid(row=0, column=1, sticky="nsew", padx=(8, 14), pady=14)
         self.form.grid_columnconfigure(1, weight=1)
         self.build_form()
@@ -119,8 +135,8 @@ class ConfigWindow(ctk.CTkToplevel):
         ctk.CTkLabel(
             self.form,
             text="Dados da camisa",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            text_color="#111827",
+            font=font(20, "bold"),
+            text_color=GRAPHITE,
         ).grid(row=0, column=0, columnspan=3, sticky="w", padx=14, pady=(16, 10))
 
         self.label_entry(self.form, 1, "Nome da camisa / modelo", self.model_name_var)
@@ -144,21 +160,21 @@ class ConfigWindow(ctk.CTkToplevel):
             )
             row += 1
 
-        self.folder_frame = ctk.CTkFrame(self.form, fg_color="#f8fafc")
+        self.folder_frame = ctk.CTkFrame(self.form, fg_color=SURFACE_ALT)
         self.folder_frame.grid(row=row, column=0, columnspan=3, sticky="ew", padx=14, pady=(18, 12))
         self.folder_frame.grid_columnconfigure(1, weight=1)
         self.build_folder_rows()
 
-        actions = ctk.CTkFrame(self.form, fg_color="white")
+        actions = ctk.CTkFrame(self.form, fg_color=CARD_BG)
         actions.grid(row=row + 1, column=0, columnspan=3, sticky="ew", padx=14, pady=16)
         actions.grid_columnconfigure(0, weight=1)
-        ctk.CTkButton(actions, text="Testar pastas", fg_color="#2563eb", command=self.test_folders).grid(
+        ctk.CTkButton(actions, text="Testar pastas", command=self.test_folders, **button_style("outline")).grid(
             row=0, column=1, padx=8
         )
-        ctk.CTkButton(actions, text="Publicar Catálogo", fg_color="#7c3aed", command=self.open_publish).grid(
+        ctk.CTkButton(actions, text="Publicar Catálogo", command=self.open_publish, **button_style("primary")).grid(
             row=0, column=2, padx=8
         )
-        ctk.CTkButton(actions, text="Salvar Configuração", fg_color="#15803d", command=self.save).grid(
+        ctk.CTkButton(actions, text="Salvar Configuração", command=self.save, **button_style("cta")).grid(
             row=0, column=3, padx=8
         )
 
@@ -185,8 +201,8 @@ class ConfigWindow(ctk.CTkToplevel):
         ctk.CTkLabel(
             self.folder_frame,
             text="Pastas dos arquivos",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color="#111827",
+            font=font(16, "bold"),
+            text_color=GRAPHITE,
         ).grid(row=0, column=0, columnspan=3, sticky="w", padx=12, pady=(12, 8))
         row = 1
         selected_count = 0
@@ -210,7 +226,7 @@ class ConfigWindow(ctk.CTkToplevel):
             ctk.CTkLabel(
                 self.folder_frame,
                 text="Marque acima os itens que essa camisa possui para liberar os campos de pasta.",
-                text_color="#64748b",
+                text_color=MUTED,
             ).grid(row=1, column=0, columnspan=3, sticky="w", padx=12, pady=12)
 
     def refresh_selectors(self):
@@ -406,14 +422,14 @@ class ConfigWindow(ctk.CTkToplevel):
         apply_app_icon(window)
         maximize_window(window)
         window.grab_set()
-        frame = ctk.CTkFrame(window, fg_color="white")
+        frame = ctk.CTkFrame(window, fg_color=CARD_BG)
         frame.pack(fill="both", expand=True, padx=16, pady=16)
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_rowconfigure(1, weight=1)
         ctk.CTkLabel(
             frame,
             text="Uso técnico: editar este JSON incorretamente pode quebrar a configuração.",
-            text_color="#b45309",
+            text_color=ORANGE_DARK,
             font=ctk.CTkFont(weight="bold"),
         ).grid(row=0, column=0, sticky="w", padx=12, pady=10)
         textbox = ctk.CTkTextbox(frame, font=ctk.CTkFont(family="Consolas", size=12))
@@ -433,12 +449,12 @@ class ConfigWindow(ctk.CTkToplevel):
             window.destroy()
             messagebox.showinfo("Salvo", "JSON avançado salvo.", parent=self)
 
-        buttons = ctk.CTkFrame(frame, fg_color="white")
+        buttons = ctk.CTkFrame(frame, fg_color=CARD_BG)
         buttons.grid(row=2, column=0, sticky="ew", padx=12, pady=10)
         buttons.grid_columnconfigure(0, weight=1)
-        ctk.CTkButton(buttons, text="Salvar JSON", fg_color="#15803d", command=save_advanced).grid(
+        ctk.CTkButton(buttons, text="Salvar JSON", command=save_advanced, **button_style("cta")).grid(
             row=0, column=1, padx=8
         )
-        ctk.CTkButton(buttons, text="Cancelar", fg_color="#64748b", command=window.destroy).grid(
+        ctk.CTkButton(buttons, text="Cancelar", command=window.destroy, **button_style("outline")).grid(
             row=0, column=2
         )

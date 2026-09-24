@@ -3,11 +3,26 @@ from tkinter import filedialog, messagebox
 
 from src.models.catalog_models import CATEGORY_DEFINITIONS, FEATURE_DEFINITIONS, default_features
 from src.services.validation_service import ValidationService
+from src.ui.theme import (
+    APP_BG,
+    CARD_BG,
+    GRAPHITE,
+    MUTED,
+    ON_DARK,
+    ON_DARK_MUTED,
+    ORANGE,
+    ORANGE_DARK,
+    SUCCESS_GREEN,
+    SURFACE_ALT,
+    TEXT,
+    button_style,
+    font,
+)
 
 
 class FirstRunWizard(ctk.CTkFrame):
     def __init__(self, master, catalog_service, on_complete):
-        super().__init__(master, fg_color="#eef4fb")
+        super().__init__(master, fg_color=APP_BG)
         self.catalog_service = catalog_service
         self.on_complete = on_complete
         self.validation_service = ValidationService()
@@ -30,28 +45,29 @@ class FirstRunWizard(ctk.CTkFrame):
 
     def render(self):
         self.clear()
-        shell = ctk.CTkFrame(self, fg_color="white", corner_radius=10)
+        shell = ctk.CTkFrame(self, fg_color=CARD_BG, corner_radius=10)
         shell.pack(fill="both", expand=True, padx=32, pady=28)
         shell.grid_columnconfigure(0, weight=1)
         shell.grid_rowconfigure(1, weight=1)
 
-        header = ctk.CTkFrame(shell, fg_color="#0b3970", corner_radius=10)
+        header = ctk.CTkFrame(shell, fg_color=GRAPHITE, corner_radius=10)
         header.grid(row=0, column=0, sticky="ew", padx=16, pady=(16, 8))
+        ctk.CTkFrame(header, fg_color=ORANGE, corner_radius=0, height=4).pack(side="bottom", fill="x")
         title = "Bem-vindo ao Montador de Pedido Futebol" if self.step == 0 else "Assistente de Configuração Inicial"
         ctk.CTkLabel(
             header,
             text=title,
-            font=ctk.CTkFont(size=24, weight="bold"),
-            text_color="white",
+            font=font(24, "bold", "italic", brand=True),
+            text_color=ON_DARK,
         ).pack(anchor="w", padx=22, pady=(18, 4))
         ctk.CTkLabel(
             header,
             text="Configure o primeiro time, a primeira camisa e as pastas dos arquivos de produção.",
-            font=ctk.CTkFont(size=14),
-            text_color="#dbeafe",
+            font=font(14),
+            text_color=ON_DARK_MUTED,
         ).pack(anchor="w", padx=22, pady=(0, 18))
 
-        content = ctk.CTkScrollableFrame(shell, fg_color="white")
+        content = ctk.CTkScrollableFrame(shell, fg_color=CARD_BG)
         content.grid(row=1, column=0, sticky="nsew", padx=18, pady=8)
         content.grid_columnconfigure(0, weight=1)
 
@@ -66,18 +82,18 @@ class FirstRunWizard(ctk.CTkFrame):
         ]
         builders[self.step](content)
 
-        nav = ctk.CTkFrame(shell, fg_color="white")
+        nav = ctk.CTkFrame(shell, fg_color=CARD_BG)
         nav.grid(row=2, column=0, sticky="ew", padx=18, pady=(8, 18))
         nav.grid_columnconfigure(1, weight=1)
         if self.step > 0:
-            ctk.CTkButton(nav, text="Voltar", width=140, fg_color="#64748b", command=self.back).grid(
+            ctk.CTkButton(nav, text="Voltar", width=140, command=self.back, **button_style("outline")).grid(
                 row=0, column=0, padx=(0, 10)
             )
-        ctk.CTkButton(nav, text="Sair", width=120, fg_color="#991b1b", command=self.master.destroy).grid(
+        ctk.CTkButton(nav, text="Sair", width=120, command=self.master.destroy, **button_style("danger")).grid(
             row=0, column=2, padx=10
         )
         next_text = "Concluir configuração" if self.step == 6 else "Próximo"
-        ctk.CTkButton(nav, text=next_text, width=190, fg_color="#15803d", command=self.next).grid(
+        ctk.CTkButton(nav, text=next_text, width=190, command=self.next, **button_style("cta")).grid(
             row=0, column=3
         )
 
@@ -168,7 +184,7 @@ class FirstRunWizard(ctk.CTkFrame):
             parent,
             text=text,
             font=ctk.CTkFont(size=20, weight="bold"),
-            text_color="#111827",
+            text_color=GRAPHITE,
         ).grid(row=0, column=0, sticky="w", pady=(14, 14))
 
     def entry(self, parent, label, variable, placeholder):
@@ -178,7 +194,7 @@ class FirstRunWizard(ctk.CTkFrame):
         field.grid(row=row + 1, column=0, sticky="ew", pady=(5, 14))
 
     def folder_row(self, parent, row, label, variable):
-        frame = ctk.CTkFrame(parent, fg_color="#f8fafc")
+        frame = ctk.CTkFrame(parent, fg_color=SURFACE_ALT)
         frame.grid(row=row, column=0, sticky="ew", pady=6)
         frame.grid_columnconfigure(1, weight=1)
         ctk.CTkLabel(frame, text=label, font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, padx=12, pady=10)
@@ -189,7 +205,7 @@ class FirstRunWizard(ctk.CTkFrame):
 
     def help(self, parent, text):
         row = len(parent.grid_slaves()) + 1
-        ctk.CTkLabel(parent, text=text, text_color="#166534", anchor="w", wraplength=900).grid(
+        ctk.CTkLabel(parent, text=text, text_color=MUTED, anchor="w", wraplength=900).grid(
             row=row, column=0, sticky="ew", pady=8
         )
 
@@ -231,7 +247,7 @@ class FirstRunWizard(ctk.CTkFrame):
                 "enabled": True,
             }
             ok, message, count = self.validation_service.validate_folder(category)
-            color = "#15803d" if ok else "#b45309"
+            color = SUCCESS_GREEN if ok else ORANGE_DARK
             label.configure(text=f"{definition['name']}: {count} arquivos encontrados ({message})", text_color=color)
 
     def validate_current_step(self):
