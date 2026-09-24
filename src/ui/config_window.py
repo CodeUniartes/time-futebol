@@ -3,7 +3,13 @@ from pathlib import Path
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 
-from src.models.catalog_models import CATEGORY_DEFINITIONS, FEATURE_DEFINITIONS, default_features
+from src.models.catalog_models import (
+    CATEGORY_DEFINITIONS,
+    FEATURE_DEFINITIONS,
+    default_features,
+    model_menu_map,
+    parse_season,
+)
 from src.services.backup_service import BackupService
 from src.services.validation_service import ValidationService
 from src.ui.assets import apply_app_icon, maximize_window
@@ -27,6 +33,8 @@ class ConfigWindow(ctk.CTkToplevel):
         self.model_var = ctk.StringVar()
         self.model_name_var = ctk.StringVar()
         self.model_description_var = ctk.StringVar()
+        self.model_season_var = ctk.StringVar()
+        self.model_active_var = ctk.BooleanVar(value=True)
         self.output_folder_var = ctk.StringVar(value=self.catalog.get("settings", {}).get("default_output_folder", ""))
         self.feature_vars = {key: ctk.BooleanVar(value=False) for key, _label in FEATURE_DEFINITIONS}
         self.folder_vars = {category_id: ctk.StringVar() for category_id in CATEGORY_DEFINITIONS}
@@ -116,15 +124,19 @@ class ConfigWindow(ctk.CTkToplevel):
 
         self.label_entry(self.form, 1, "Nome da camisa / modelo", self.model_name_var)
         self.label_entry(self.form, 2, "Observação", self.model_description_var)
-        self.folder_picker(self.form, 3, "Pasta de saída padrão", self.output_folder_var)
+        self.label_entry(self.form, 3, "Ano (opcional, ex.: 2026)", self.model_season_var)
+        ctk.CTkCheckBox(self.form, text="Ativa (aparece no site)", variable=self.model_active_var).grid(
+            row=4, column=0, columnspan=3, sticky="w", padx=14, pady=7
+        )
+        self.folder_picker(self.form, 5, "Pasta de saída padrão", self.output_folder_var)
 
         ctk.CTkLabel(
             self.form,
             text="O que essa camisa possui?",
             font=ctk.CTkFont(size=17, weight="bold"),
-        ).grid(row=4, column=0, columnspan=3, sticky="w", padx=14, pady=(18, 8))
+        ).grid(row=6, column=0, columnspan=3, sticky="w", padx=14, pady=(18, 8))
 
-        row = 5
+        row = 7
         for key, label in FEATURE_DEFINITIONS:
             ctk.CTkCheckBox(self.form, text=label, variable=self.feature_vars[key], command=self.build_folder_rows).grid(
                 row=row, column=0, columnspan=3, sticky="w", padx=14, pady=5
@@ -214,7 +226,7 @@ class ConfigWindow(ctk.CTkToplevel):
         self.selected_team_id = self.team_map.get(selected_name)
         team = self.get_selected_team()
         models = team.get("models", []) if team else []
-        self.model_map = {model["name"]: model["id"] for model in models}
+        self.model_map = model_menu_map(models)
         model_names = list(self.model_map) or ["Nenhuma camisa cadastrada"]
         self.model_menu.configure(values=model_names)
         self.model_var.set(model_names[0])
@@ -248,10 +260,14 @@ class ConfigWindow(ctk.CTkToplevel):
         if not model:
             self.model_name_var.set("")
             self.model_description_var.set("")
+            self.model_season_var.set("")
+            self.model_active_var.set(True)
             self.build_folder_rows()
             return
         self.model_name_var.set(model.get("name", ""))
         self.model_description_var.set(model.get("description", ""))
+        self.model_season_var.set(str(model.get("season") or ""))
+        self.model_active_var.set(bool(model.get("active", True)))
         features = {**default_features(), **model.get("features", {})}
         for key, value in features.items():
             if key in self.feature_vars:
@@ -308,6 +324,11 @@ class ConfigWindow(ctk.CTkToplevel):
         if not any(self.selected_features().values()):
             messagebox.showwarning("Selecione uma opção", "Marque pelo menos um item que essa camisa possui.", parent=self)
             return
+        try:
+            season = parse_season(self.model_season_var.get())
+        except ValueError as error:
+            messagebox.showwarning("Ano inválido", str(error), parent=self)
+            return
         self.catalog_service.update_settings({"default_output_folder": self.output_folder_var.get()})
         if self.selected_model_id:
             model = self.catalog_service.update_model(
@@ -317,6 +338,8 @@ class ConfigWindow(ctk.CTkToplevel):
                 self.model_description_var.get(),
                 self.selected_features(),
                 self.selected_folder_paths(),
+                season=season,
+                active=self.model_active_var.get(),
             )
         else:
             model = self.catalog_service.add_model(
@@ -325,6 +348,8 @@ class ConfigWindow(ctk.CTkToplevel):
                 self.model_description_var.get(),
                 self.selected_features(),
                 self.selected_folder_paths(),
+                season=season,
+                active=self.model_active_var.get(),
             )
         self.selected_model_id = model["id"]
         self.catalog = self.catalog_service.load_catalog()
