@@ -39,6 +39,7 @@ docs/                     roadmap, specs, plans
 | 4 | Site do cliente | M | 2 e 3 | Catálogo, montagem, envio, WhatsApp |
 | 5 | Painel de prévia de impressão (58 × 200 cm) | M | 2 e 4 | Encaixe automático em páginas, comprimento usado |
 | 6 | Upload de arte do cliente | M | 3, 4 e 5 | Arte própria no pedido, com tamanho ditado e aceite de responsabilidade |
+| 7 | Login e cadastro de clientes (telefone verificado) | M | 3 | Cliente identificado pelo WhatsApp, com código de confirmação |
 
 SP2 e SP3 podem andar em paralelo (só compartilham contratos). SP4 precisa de ambos. SP5 precisa do tamanho em cm de cada
 arte (SP2) e da tela de resumo (SP4). SP6 entra por último. Spec do SP5: `docs/superpowers/specs/2026-09-24-painel-previa-impressao-design.md`.
@@ -129,6 +130,25 @@ de 58 × 200 cm com as artes encaixadas na escala real (giro de 90°, espaço m�
 em páginas navegáveis e com o comprimento usado. Algoritmo em TypeScript (MaxRects), reaproveitável no Worker.
 O `layout` pode ir no pedido como campo opcional e informativo; a produção recalcula.
 
+### SP7: login de clientes (proposto em 2026-09-24, a confirmar)
+
+O **telefone (WhatsApp) é o identificador do cliente**. Sem verificar que a pessoa é dona do número, qualquer um poderia
+ver ou refazer pedidos de outro, então o login confirma o número com um **código de uso único** (OTP).
+
+- **Fluxo:** cliente informa o número → recebe código de 6 dígitos (validade curta, poucas tentativas) → sessão em cookie
+  `HttpOnly; Secure; SameSite=Strict`. O login pode ficar só na hora de enviar o pedido, sem travar a navegação pelo catálogo.
+- **Envio do código:** WhatsApp (o Digisac já é usado pela gráfica; confirmar se a API dele envia mensagem ativa) ou SMS
+  como alternativa. Custo por mensagem a confirmar.
+- **Dados (D1, regras do projeto):** `customers` (id, `phone` normalizado só dígitos com `55`+DDD, `name`, datas UTC,
+  exclusão lógica), `login_codes` (só o hash do código, expiração, tentativas), `sessions`. `orders` ganha `customer_id`.
+  O contrato do pedido continua com `customer.whatsapp` (agora sempre presente e normalizado).
+- **Proteções:** Turnstile e limite de envios por número e por IP (evita gastar mensagens e spam), sem revelar se o número
+  já existe, bloqueio temporário após tentativas erradas.
+- **O que o cliente ganha:** dados preenchidos, histórico dos pedidos, refazer um pedido anterior e, no SP6, biblioteca
+  das próprias artes.
+- **Privacidade (LGPD):** aviso do uso do telefone e do nome, consulta e exclusão dos dados a pedido, retenção definida.
+- **Montador:** pode listar clientes e pedidos por telefone; a integração de finalização continua pelo código do pedido.
+
 ### SP6: upload de arte do cliente
 
 O cliente envia uma arte junto do pedido e **dita o tamanho** (largura ou altura em cm, proporção mantida, máx. 58 cm).
@@ -151,7 +171,7 @@ fica atrás de uma interface simples, para trocar depois sem mexer no site.
 | PDF de impressão já montado | SP5 com arte em resolução real (o painel v1 é só prévia) |
 | Caixa de pedidos do dono | Endpoint de listagem (`POST /api/admin/orders/list`, offset/limit) + tela protegida (Cloudflare Access) |
 | Nome e número personalizados | Novo tipo de categoria (`custom_text`); campo aditivo `custom` no item do pedido (`{name, number}`); geração da arte por fonte |
-| Pagamento / login | Fora do plano; só se a operação mudar |
+| Pagamento online | Fora do plano; só se a operação mudar (o login de clientes agora é o SP7) |
 
 ## Ganchos de extensão que o SP1 já deixa prontos
 
