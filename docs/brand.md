@@ -53,7 +53,7 @@ selo do time e a barra de progresso.
 | Onde | Como |
 |---|---|
 | **Site (SP4 a SP7)** | Cabeçalho branco com logo colorido ou grafite com logo branco; ações em grafite; laranja como destaque. A cor de destaque por time (roadmap SP4) vira **secundária**: a marca Uniartes continua no cabeçalho e nos botões |
-| **Montador** | Trocar o azul atual (`#0b3970` em `src/ui/theme.py`) por grafite e laranja, logo novo no cabeçalho (hoje `assets/logo_cabecalho.png`) |
+| **Montador** | **Aplicado** (2026-09-24): cabeçalho grafite com faixa laranja e o logo branco, botões de ação em grafite, botões que concluem (gerar, salvar) em laranja escuro, cartões brancos com barra laranja no título, tabela com cabeçalho grafite. Tokens em `src/ui/theme.py`; ícone e logo em `assets/` |
 | **Mensagens de WhatsApp** | Sem cor; assinar como "Uniartes Uniformes" |
 
 ## Pendências da marca
@@ -62,4 +62,6 @@ selo do time e a barra de progresso.
 - Aprovar o laranja escuro `#B95A1D` para botões.
 - Fonte do site: as da marca são pagas; sugestão de fonte web livre parecida com o Gill Sans para o texto (a definir no
   `/spartan:ux system`).
+- **Fonte do Montador:** o Gill Sans MT (da marca, instalado com o Office) só aparece nos títulos em itálico. O algarismo 1 dele
+  parece a letra I, ruim para número de pedido e quantidade; o resto usa a Segoe UI do Windows.
 - Escolher qual arquivo do logo entra no repositório (o repositório é público).
