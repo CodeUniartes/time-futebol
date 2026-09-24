@@ -137,8 +137,11 @@ ver ou refazer pedidos de outro, então o login confirma o número com um **cód
 
 - **Fluxo:** cliente informa o número → recebe código de 6 dígitos (validade curta, poucas tentativas) → sessão em cookie
   `HttpOnly; Secure; SameSite=Strict`. O login pode ficar só na hora de enviar o pedido, sem travar a navegação pelo catálogo.
-- **Envio do código:** WhatsApp (o Digisac já é usado pela gráfica; confirmar se a API dele envia mensagem ativa) ou SMS
-  como alternativa. Custo por mensagem a confirmar.
+- **Envio do código:** WhatsApp pelo **Digisac**. O Worker `pedido-terceiro-ca-dtf` já envia mensagem por número com
+  `POST /messages` (`number`, `serviceId`, `dontOpenTicket`), então não é preciso existir contato nem abrir ticket. A conta
+  usa `DIGISAC_API_BASE_URL`, `DIGISAC_SERVICE_ID` e o token do Digisac (segredo). A confirmar: se a conexão do WhatsApp é
+  a oficial (Cloud API, que exige **modelo de mensagem aprovado** para a primeira mensagem) ou não oficial (texto livre, mas
+  com risco de bloqueio do número se enviar muito para desconhecidos). SMS fica como alternativa.
 - **Dados (D1, regras do projeto):** `customers` (id, `phone` normalizado só dígitos com `55`+DDD, `name`, datas UTC,
   exclusão lógica), `login_codes` (só o hash do código, expiração, tentativas), `sessions`. `orders` ganha `customer_id`.
   O contrato do pedido continua com `customer.whatsapp` (agora sempre presente e normalizado).
