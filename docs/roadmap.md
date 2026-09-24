@@ -114,6 +114,8 @@ arte (SP2) e da tela de resumo (SP4). SP6 entra por último. Spec do SP5: `docs/
 ### SP4: site do cliente
 
 - React + Vite + Tailwind, mobile primeiro, servido pelos assets do próprio Worker.
+- **Ponto de partida:** o protótipo do Figma Make (React 19 + Vite + Tailwind 4 + react-router), revisado em
+  `docs/design-review-figma-make.md` com a lista de correções (contraste, painel provisório, dados de exemplo, fonte, login).
 - Telas (da matriz de estados da fase de design): Time → Ano → Versão; grade de itens por categoria; resumo; pedido
   enviado. Todos os estados: vazio, carregando, erro, parcial. Carrinho em `localStorage`; reenvio seguro (idempotência).
 - WhatsApp: link `wa.me` com texto curto (código, cliente, total de peças e link). Lista completa só se couber; o código
