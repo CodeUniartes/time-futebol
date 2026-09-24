@@ -22,6 +22,7 @@ SURFACE_ALT = "#F8F9F9"
 CARD_BG = "#FFFFFF"
 CARD_BORDER = "#D9DCDD"
 FIELD_BORDER = "#B8BDBE"
+FIELD_FILL = "#EEF0F0"
 TEXT = "#2C2F30"
 MUTED = "#6B7071"
 ON_DARK = "#FFFFFF"
@@ -103,10 +104,10 @@ def apply_brand_theme(root):
         border_width=2,
     )
     theme["CTkOptionMenu"].update(
-        fg_color=[GRAPHITE, GRAPHITE],
-        button_color=[GRAPHITE_DARK, GRAPHITE_DARK],
+        fg_color=[FIELD_FILL, FIELD_FILL],
+        button_color=[GRAPHITE, GRAPHITE],
         button_hover_color=[ORANGE_DARK, ORANGE_DARK],
-        text_color=[ON_DARK, ON_DARK],
+        text_color=[TEXT, TEXT],
         corner_radius=8,
     )
     theme["DropdownMenu"] = {

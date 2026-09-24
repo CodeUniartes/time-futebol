@@ -17,6 +17,7 @@ from src.ui.theme import (
     CARD_BG,
     CARD_BORDER,
     FIELD_BORDER,
+    FIELD_FILL,
     GRAPHITE,
     MUTED,
     ORANGE,
@@ -35,7 +36,7 @@ from src.utils.text_utils import parse_comma_items
 
 
 ENTRY_STYLE = {
-    "height": 34,
+    "height": 32,
     "fg_color": CARD_BG,
     "border_color": FIELD_BORDER,
     "border_width": 1,
@@ -44,14 +45,14 @@ ENTRY_STYLE = {
 }
 
 MENU_STYLE = {
-    "height": 34,
-    "fg_color": GRAPHITE,
-    "button_color": "#343637",
+    "height": 32,
+    "fg_color": FIELD_FILL,
+    "button_color": GRAPHITE,
     "button_hover_color": ORANGE_DARK,
     "dropdown_fg_color": CARD_BG,
     "dropdown_hover_color": ORANGE_TINT,
     "dropdown_text_color": TEXT,
-    "text_color": "#FFFFFF",
+    "text_color": TEXT,
     "corner_radius": 8,
 }
 
@@ -94,8 +95,8 @@ class OrderPanel(ctk.CTkFrame):
         self.reload_catalog()
 
     def build(self):
-        self.grid_columnconfigure(0, weight=58, uniform="content")
-        self.grid_columnconfigure(1, weight=45, uniform="content")
+        self.grid_columnconfigure(0, weight=60, uniform="content")
+        self.grid_columnconfigure(1, weight=40, uniform="content")
         self.grid_rowconfigure(0, weight=1)
 
         left = ctk.CTkScrollableFrame(self, fg_color=APP_BG, scrollbar_button_color=FIELD_BORDER)
@@ -134,7 +135,7 @@ class OrderPanel(ctk.CTkFrame):
         frame.grid(row=row, column=column, columnspan=columnspan, sticky="nsew", padx=padx, pady=(0, 10))
         frame.grid_columnconfigure(1, weight=1)
         title_bar = ctk.CTkFrame(frame, fg_color="transparent")
-        title_bar.grid(row=0, column=0, columnspan=8, sticky="w", padx=16, pady=(12, 8))
+        title_bar.grid(row=0, column=0, columnspan=8, sticky="w", padx=16, pady=(10, 6))
         ctk.CTkFrame(title_bar, fg_color=ORANGE, width=5, height=20, corner_radius=2).grid(row=0, column=0, padx=(0, 10))
         ctk.CTkLabel(
             title_bar,
@@ -160,10 +161,10 @@ class OrderPanel(ctk.CTkFrame):
                 row=index, column=1, sticky="ew", padx=(0, 16), pady=5
             )
         ctk.CTkLabel(frame, text="Pasta de saída:", text_color=TEXT, font=ctk.CTkFont(weight="bold")).grid(
-            row=4, column=0, sticky="w", padx=(16, 10), pady=(5, 14)
+            row=4, column=0, sticky="w", padx=(16, 10), pady=(5, 10)
         )
         ctk.CTkEntry(frame, textvariable=self.output_folder_var, **ENTRY_STYLE).grid(
-            row=4, column=1, sticky="ew", padx=(0, 8), pady=(5, 14)
+            row=4, column=1, sticky="ew", padx=(0, 8), pady=(5, 10)
         )
         ctk.CTkButton(
             frame,
@@ -172,7 +173,7 @@ class OrderPanel(ctk.CTkFrame):
             height=34,
             command=self.select_output_folder,
             **button_style("outline"),
-        ).grid(row=4, column=2, sticky="e", padx=(0, 16), pady=(5, 14))
+        ).grid(row=4, column=2, sticky="e", padx=(0, 16), pady=(5, 10))
 
     def build_selection(self, parent, row, column):
         frame = self.section(parent, row, "1. SELECIONE TIME E MODELO", column=column, fg_color=CARD_BG, padx=(6, 0))
@@ -198,9 +199,9 @@ class OrderPanel(ctk.CTkFrame):
             text="Observação do modelo:",
             text_color=TEXT,
             font=ctk.CTkFont(weight="bold"),
-        ).grid(row=3, column=0, sticky="w", padx=(16, 10), pady=(5, 14))
+        ).grid(row=3, column=0, sticky="w", padx=(16, 10), pady=(5, 10))
         ctk.CTkEntry(frame, textvariable=self.model_note_var, state="disabled", **ENTRY_STYLE).grid(
-            row=3, column=1, sticky="ew", padx=(0, 16), pady=(5, 14)
+            row=3, column=1, sticky="ew", padx=(0, 16), pady=(5, 10)
         )
 
     def build_add_item(self, parent, row):
@@ -219,20 +220,20 @@ class OrderPanel(ctk.CTkFrame):
         self.category_menu = self.style_menu(
             ctk.CTkOptionMenu(frame, variable=self.category_var, values=[""], command=self.on_category_change)
         )
-        self.category_menu.grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 16))
+        self.category_menu.grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 12))
         self.item_menu = self.style_menu(ctk.CTkOptionMenu(frame, variable=self.item_var, values=[""]))
-        self.item_menu.grid(row=2, column=1, sticky="ew", padx=8, pady=(0, 16))
+        self.item_menu.grid(row=2, column=1, sticky="ew", padx=8, pady=(0, 12))
         ctk.CTkEntry(frame, textvariable=self.quantity_var, width=88, justify="center", **ENTRY_STYLE).grid(
-            row=2, column=2, sticky="ew", padx=8, pady=(0, 16)
+            row=2, column=2, sticky="ew", padx=8, pady=(0, 12)
         )
         ctk.CTkButton(
             frame,
             text="＋  Adicionar\nao carrinho",
-            height=56,
+            height=46,
             font=ctk.CTkFont(size=15, weight="bold"),
             command=self.add_single_item,
             **button_style("primary"),
-        ).grid(row=2, column=3, sticky="ew", padx=(14, 16), pady=(0, 16))
+        ).grid(row=2, column=3, sticky="ew", padx=(14, 16), pady=(0, 12))
 
     def build_add_group(self, parent, row):
         frame = self.section(parent, row, "3. ADICIONAR GRUPO (VÁRIOS ITENS)", fg_color=CARD_BG)
@@ -261,19 +262,19 @@ class OrderPanel(ctk.CTkFrame):
         ctk.CTkButton(
             frame,
             text="Adicionar\ngrupo",
-            height=56,
+            height=46,
             font=ctk.CTkFont(size=15, weight="bold"),
             command=self.add_group_items,
             **button_style("primary"),
         ).grid(row=2, column=3, sticky="ew", padx=(14, 16), pady=(0, 6))
         ctk.CTkLabel(frame, text="Exemplo: 0, 1, 3, 7, 9", text_color=MUTED).grid(
-            row=3, column=1, columnspan=2, sticky="w", padx=8, pady=(0, 14)
+            row=3, column=1, columnspan=2, sticky="w", padx=8, pady=(0, 10)
         )
 
     def build_quick_actions(self, parent, row):
         self.quick_frame = self.section(parent, row, "4. AÇÕES RÁPIDAS", fg_color=ORANGE_TINT)
         self.quick_buttons_frame = ctk.CTkFrame(self.quick_frame, fg_color=ORANGE_TINT)
-        self.quick_buttons_frame.grid(row=1, column=0, columnspan=8, sticky="ew", padx=16, pady=(0, 16))
+        self.quick_buttons_frame.grid(row=1, column=0, columnspan=8, sticky="ew", padx=16, pady=(0, 12))
 
     def build_validation(self, parent, row, column):
         frame = self.section(parent, row, "5. VALIDAÇÃO", column=column, fg_color=CARD_BG, padx=(0, 6))
@@ -285,7 +286,7 @@ class OrderPanel(ctk.CTkFrame):
             border_color=SUCCESS_BORDER,
             corner_radius=8,
         )
-        self.validation_status_frame.grid(row=1, column=0, columnspan=4, sticky="ew", padx=16, pady=(0, 16))
+        self.validation_status_frame.grid(row=1, column=0, columnspan=4, sticky="ew", padx=16, pady=(0, 12))
         self.validation_status_frame.grid_columnconfigure(1, weight=1)
         self.validation_icon = ctk.CTkLabel(
             self.validation_status_frame,
@@ -323,35 +324,35 @@ class OrderPanel(ctk.CTkFrame):
         ctk.CTkButton(
             frame,
             text="Gerar pasta\nde produção",
-            height=58,
+            height=48,
             font=ctk.CTkFont(size=14, weight="bold"),
             command=self.generate_production,
             **button_style("success"),
-        ).grid(row=1, column=0, sticky="ew", padx=(16, 8), pady=(0, 16))
+        ).grid(row=1, column=0, sticky="ew", padx=(16, 8), pady=(0, 12))
         ctk.CTkButton(
             frame,
             text="Abrir pasta\ngerada",
-            height=58,
+            height=48,
             font=ctk.CTkFont(size=14, weight="bold"),
             command=self.open_last_generated_folder,
             **button_style("outline"),
-        ).grid(row=1, column=1, sticky="ew", padx=8, pady=(0, 16))
+        ).grid(row=1, column=1, sticky="ew", padx=8, pady=(0, 12))
         ctk.CTkButton(
             frame,
             text="Resumo do\npedido (TXT)",
-            height=58,
+            height=48,
             font=ctk.CTkFont(size=14, weight="bold"),
             command=self.export_summary,
             **button_style("outline"),
-        ).grid(row=1, column=2, sticky="ew", padx=8, pady=(0, 16))
+        ).grid(row=1, column=2, sticky="ew", padx=8, pady=(0, 12))
         ctk.CTkButton(
             frame,
             text="Limpar\ncarrinho",
-            height=58,
+            height=48,
             font=ctk.CTkFont(size=14, weight="bold"),
             command=self.clear_cart,
             **button_style("danger"),
-        ).grid(row=1, column=3, sticky="ew", padx=(8, 16), pady=(0, 16))
+        ).grid(row=1, column=3, sticky="ew", padx=(8, 16), pady=(0, 12))
 
     def reload_catalog(self):
         self.catalog = self.catalog_service.load_catalog()
@@ -475,7 +476,7 @@ class OrderPanel(ctk.CTkFrame):
             ctk.CTkButton(
                 self.quick_buttons_frame,
                 text=icon_map.get(category["id"], category["name"]),
-                height=58,
+                height=48,
                 font=ctk.CTkFont(size=13, weight="bold"),
                 command=lambda cat=category: self.add_quick_action(cat),
                 **button_style("quick"),
