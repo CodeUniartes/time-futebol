@@ -1,6 +1,12 @@
 from copy import deepcopy
 
-from src.models.catalog_models import BLANK_CATALOG, categories_for_features, default_features, normalize_category
+from src.models.catalog_models import (
+    BLANK_CATALOG,
+    SCHEMA_VERSION,
+    categories_for_features,
+    default_features,
+    normalize_category,
+)
 from src.utils.json_utils import load_json, save_json
 from src.utils.path_utils import CONFIG_DIR
 from src.utils.text_utils import slugify
@@ -20,6 +26,7 @@ class CatalogService:
         if not isinstance(data, dict):
             data = deepcopy(BLANK_CATALOG)
         data.setdefault("schema_version", 1)
+        self.migrate(data)
         data.setdefault("configured", False)
         data.setdefault("settings", deepcopy(BLANK_CATALOG["settings"]))
         data.setdefault("teams", [])
@@ -29,6 +36,16 @@ class CatalogService:
                     normalize_category(category) for category in model.get("categories", [])
                 ]
         return data
+
+    def migrate(self, data):
+        # Em memória: o arquivo só muda na próxima gravação.
+        version = data["schema_version"]
+        if isinstance(version, int) and version >= SCHEMA_VERSION:
+            return
+        for team in data.get("teams", []):
+            for model in team.get("models", []):
+                model.setdefault("active", True)
+        data["schema_version"] = SCHEMA_VERSION
 
     def save_catalog(self, catalog):
         save_json(self.catalog_path, catalog)
