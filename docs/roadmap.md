@@ -37,8 +37,11 @@ docs/                     roadmap, specs, plans
 | 2 | Publicar catálogo | M | 1 | `catalog.public.json` + prévias `.webp` publicados |
 | 3 | API (Worker + D1) | M | 1 (contratos) | Criar/ler pedido; importar por código no Montador |
 | 4 | Site do cliente | M | 2 e 3 | Catálogo, montagem, envio, WhatsApp |
+| 5 | Painel de prévia de impressão (58 × 200 cm) | M | 2 e 4 | Encaixe automático em páginas, comprimento usado |
+| 6 | Upload de arte do cliente | M | 3, 4 e 5 | Arte própria no pedido, com tamanho ditado e aceite de responsabilidade |
 
-SP2 e SP3 podem andar em paralelo (só compartilham contratos). SP4 precisa de ambos.
+SP2 e SP3 podem andar em paralelo (só compartilham contratos). SP4 precisa de ambos. SP5 precisa do tamanho em cm de cada
+arte (SP2) e da tela de resumo (SP4). SP6 entra por último. Spec do SP5: `docs/superpowers/specs/2026-09-24-painel-previa-impressao-design.md`.
 
 ### SP2: publicar catálogo (Montador)
 
@@ -50,6 +53,13 @@ SP2 e SP3 podem andar em paralelo (só compartilham contratos). SP4 precisa de a
 - **Envio:** `POST /api/admin/publish` (manifesto + `catalog_version` = data/hora UTC) e `POST /api/admin/preview?key=`
   por arquivo, com token de administrador. Estilo RPC (só GET/POST, ids em query), como nas regras do projeto.
 - **Config local:** `config/site.json` (`api_base_url`, `admin_token`, `reader_token`), **ignorado pelo git**.
+- **Tamanho físico (necessário ao SP5):** cada item do catálogo público sai com `width_cm` e `height_cm` (pixels ÷ resolução
+  gravada no arquivo), medidos no **retângulo com tinta**, sem margem transparente; a prévia `.webp` é recortada nesse
+  retângulo.
+- **Leitura dos `.tif` (testada em 2026-09-24 com os 505 arquivos reais):** o Pillow sozinho lê só 232 (46%); os 273 CMYK
+  com transparência (5 e 6 canais) falham. `tifffile` + `imagecodecs` + `numpy` leram os 505, sem falha, em ~0,2 s por
+  arquivo. Decisão: ler com `tifffile`, converter CMYK para RGB e achatar o alfa, e usar o Pillow para redimensionar e
+  gravar `.webp`. Impacto: `numpy` aumenta o `.exe` (medir).
 - **Riscos:** TIFF com transparência, CMYK, 16 bits ou compressão exótica quebrando o Pillow (testar com 5 arquivos
   reais antes de qualquer outra coisa); tamanho do executável com Pillow; publicar por engano camisa inativa.
 - **Pronto quando:** publicar o catálogo real gera prévias legíveis e o site consegue listá-las.
@@ -95,11 +105,26 @@ SP2 e SP3 podem andar em paralelo (só compartilham contratos). SP4 precisa de a
   contraste, `prefers-reduced-motion`.
 - **Pronto quando:** um pedido feito no celular vira código, abre o WhatsApp e importa no Montador.
 
+### SP5: painel de prévia de impressão
+
+Spec: `docs/superpowers/specs/2026-09-24-painel-previa-impressao-design.md`. O cliente vê, no resumo do pedido, um painel
+de 58 × 200 cm com as artes encaixadas na escala real (giro de 90°, espaço mínimo de 1/10 pol, quantidade N = N cópias),
+em páginas navegáveis e com o comprimento usado. Algoritmo em TypeScript (MaxRects), reaproveitável no Worker.
+O `layout` pode ir no pedido como campo opcional e informativo; a produção recalcula.
+
+### SP6: upload de arte do cliente
+
+O cliente envia uma arte junto do pedido e **dita o tamanho** (largura ou altura em cm, proporção mantida, máx. 58 cm).
+Aviso de responsabilidade com aceite registrado no pedido (data/hora e versão do texto): fundo, resolução ruim e afins são
+do cliente. Limites de segurança: tipos aceitos (PNG, JPG, PDF), tamanho máximo por arquivo e artes por pedido. A arte
+entra no encaixe do SP5 como mais um retângulo. Requer armazenamento (R2) e endpoint de envio no SP3.
+
 ## v2 (depois da base)
 
 | Item | O que precisa existir antes |
 |---|---|
-| Preço por metro linear + área de impressão | Tamanho em cm de cada arquivo (Pillow: pixels ÷ DPI), largura útil da película, algoritmo de encaixe, prévia visual |
+| Preço por metro linear | SP5 pronto (comprimento usado) e a tabela de preço |
+| PDF de impressão já montado | SP5 com arte em resolução real (o painel v1 é só prévia) |
 | Caixa de pedidos do dono | Endpoint de listagem (`POST /api/admin/orders/list`, offset/limit) + tela protegida (Cloudflare Access) |
 | Nome e número personalizados | Novo tipo de categoria (`custom_text`); campo aditivo `custom` no item do pedido (`{name, number}`); geração da arte por fonte |
 | Pagamento / login | Fora do plano; só se a operação mudar |
