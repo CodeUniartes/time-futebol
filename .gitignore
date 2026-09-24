@@ -17,6 +17,9 @@ config/site.json
 config/backups/*
 !config/backups/.gitkeep
 
+# Catálogo público e prévias gerados por Publicar Catálogo
+publish/
+
 # Dados de runtime
 data/pedidos_salvos/*
 !data/pedidos_salvos/.gitkeep
