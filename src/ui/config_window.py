@@ -14,6 +14,7 @@ from src.services.backup_service import BackupService
 from src.services.validation_service import ValidationService
 from src.ui.assets import apply_app_icon, maximize_window
 from src.ui.help_window import HelpWindow
+from src.ui.publish_window import PublishWindow
 
 
 class ConfigWindow(ctk.CTkToplevel):
@@ -154,8 +155,11 @@ class ConfigWindow(ctk.CTkToplevel):
         ctk.CTkButton(actions, text="Testar pastas", fg_color="#2563eb", command=self.test_folders).grid(
             row=0, column=1, padx=8
         )
-        ctk.CTkButton(actions, text="Salvar Configuração", fg_color="#15803d", command=self.save).grid(
+        ctk.CTkButton(actions, text="Publicar Catálogo", fg_color="#7c3aed", command=self.open_publish).grid(
             row=0, column=2, padx=8
+        )
+        ctk.CTkButton(actions, text="Salvar Configuração", fg_color="#15803d", command=self.save).grid(
+            row=0, column=3, padx=8
         )
 
     def label_entry(self, parent, row, label, variable):
@@ -356,6 +360,9 @@ class ConfigWindow(ctk.CTkToplevel):
         self.refresh_selectors()
         self.on_saved()
         messagebox.showinfo("Salvo", "Configuração salva com sucesso.", parent=self)
+
+    def open_publish(self):
+        PublishWindow(self, self.catalog_service)
 
     def test_folders(self):
         messages = []
