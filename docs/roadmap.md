@@ -138,7 +138,16 @@ ver ou refazer pedidos de outro, então a **criação da conta** confirma o núm
 - **Fluxo (decisão de 2026-09-24: o código serve só para criar a conta):**
   1. **Criar conta:** número + nome → código de 6 dígitos por WhatsApp → cliente digita o código e **define uma senha**.
   2. **Entrar depois:** número + senha, sem código, sem enviar mensagem. Sessão em cookie `HttpOnly; Secure; SameSite=Strict`.
-  3. **Esqueci a senha:** a definir (novo código por WhatsApp, no máximo 1 por dia por número, ou redefinição feita pela gráfica).
+  3. **Esqueci a senha (decisão de 2026-09-24):** o site leva o cliente para a conversa de WhatsApp da gráfica (link `wa.me`
+     com mensagem pronta). A gráfica gera um **link de redefinição** e envia na conversa. Ao abrir o link, o site pede o
+     código, que é enviado por WhatsApp (a mesma mensagem do cadastro); com o código, o cliente define a nova senha.
+     - **Quem gera o link:** botão no Montador ("Redefinir senha do cliente") que chama `POST /api/admin/customer/reset-link`
+       (token de administrador) e copia a URL para colar no Digisac.
+     - **Regra para a equipe:** gerar o link **para o número da própria conversa** (o WhatsApp de quem escreveu), nunca para
+       um número digitado no texto. Isso impede pedir a redefinição da conta de outra pessoa.
+     - **Link:** uso único, validade curta (30 min), amarrado a um cliente; abrir o link **não** entra na conta, só libera o
+       envio do código. Ao redefinir, as sessões antigas são encerradas.
+     - **Custo em mensagens:** um código por redefinição, e a redefinição só existe depois de a gráfica agir.
   O login pode ficar só na hora de enviar o pedido, sem travar a navegação pelo catálogo.
 - **Senha:** mínimo de 8 caracteres, guardada só como hash (PBKDF2-SHA256 nativo do Workers, com sal por conta e iterações
   ajustadas ao limite de CPU do plano), nunca em log. Bloqueio temporário após tentativas erradas.
