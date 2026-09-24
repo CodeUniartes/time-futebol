@@ -71,6 +71,7 @@ class MainWindow(ctk.CTk):
         toolbar.grid_rowconfigure(0, weight=1)
         buttons = [
             ("\ue8a5", "Novo Pedido", self.new_order),
+            ("\ue8e5", "Importar Pedido", self.import_order),
             ("\ue74e", "Salvar", self.save_order),
             ("\ue8b7", "Pedidos Salvos", self.open_saved_orders),
             ("\ue713", "Configurações", self.open_config),
@@ -96,7 +97,7 @@ class MainWindow(ctk.CTk):
         )
 
     def toolbar_button(self, parent, column, icon, text, command):
-        cell = ctk.CTkFrame(parent, fg_color="#f8fafc", corner_radius=0, width=130, height=76)
+        cell = ctk.CTkFrame(parent, fg_color="#f8fafc", corner_radius=0, width=116, height=76)
         cell.grid(row=0, column=column, sticky="nsew")
         cell.grid_propagate(False)
         cell.grid_rowconfigure(0, weight=1)
@@ -123,6 +124,10 @@ class MainWindow(ctk.CTk):
     def new_order(self):
         if self.order_panel:
             self.order_panel.new_order()
+
+    def import_order(self):
+        if self.order_panel:
+            self.order_panel.import_order()
 
     def save_order(self):
         if self.order_panel:

@@ -3,9 +3,10 @@ from pathlib import Path
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 
-from src.models.catalog_models import ALL_FILES_LABEL
+from src.models.catalog_models import ALL_FILES_LABEL, model_menu_map
 from src.services.cart_service import CartService
 from src.services.file_service import FileService
+from src.services.order_import_service import OrderImportError, parse_site_order_file
 from src.services.order_service import OrderService
 from src.services.settings_service import SettingsService
 from src.services.validation_service import ValidationService
@@ -356,7 +357,7 @@ class OrderPanel(ctk.CTkFrame):
         self.selected_team_id = self.team_map.get(selected_name)
         team = self.get_selected_team()
         models = team.get("models", []) if team else []
-        self.model_map = {model["name"]: model["id"] for model in models}
+        self.model_map = model_menu_map(models)
         model_names = list(self.model_map) or ["Nenhuma camisa configurada"]
         self.model_menu.configure(values=model_names)
         self.model_var.set(model_names[0])
@@ -689,6 +690,27 @@ class OrderPanel(ctk.CTkFrame):
         self.cart_service.clear()
         self.cart_panel.refresh()
         self.validate_order(silent=True)
+
+    def import_order(self):
+        path = filedialog.askopenfilename(
+            parent=self,
+            title="Importar pedido do site",
+            filetypes=[("Pedido do site (JSON)", "*.json"), ("Todos os arquivos", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            imported = parse_site_order_file(path, self.catalog)
+        except OrderImportError as error:
+            messagebox.showerror("Importar pedido", str(error), parent=self)
+            return
+        if self.cart_service.items and not messagebox.askyesno(
+            "Importar pedido", "Substituir o pedido atual?", parent=self
+        ):
+            return
+        self.load_order_payload(imported.payload)
+        if imported.warnings:
+            messagebox.showwarning("Importar pedido", "\n\n".join(imported.warnings), parent=self)
 
     def save_order(self):
         path = self.order_service.save_order(
