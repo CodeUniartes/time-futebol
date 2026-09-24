@@ -11,6 +11,7 @@ FEATURE_DEFINITIONS = [
 ]
 
 ALL_FILES_LABEL = "Todos os arquivos"
+SCHEMA_VERSION = 2
 
 
 CATEGORY_DEFINITIONS = {
@@ -82,7 +83,7 @@ CATEGORY_DEFINITIONS = {
 
 
 BLANK_CATALOG = {
-    "schema_version": 1,
+    "schema_version": SCHEMA_VERSION,
     "configured": False,
     "settings": {
         "default_output_folder": "",
@@ -139,3 +140,37 @@ def categories_for_features(features, folder_paths=None):
 
 def category_label(category_id):
     return CATEGORY_DEFINITIONS.get(category_id, {}).get("name", category_id)
+
+
+def model_display_name(model):
+    name = model.get("name", "")
+    season = model.get("season")
+    if isinstance(season, int) and not isinstance(season, bool) and season > 0:
+        return f"{name} · {season}"
+    return name
+
+
+def model_menu_map(models):
+    labels = {}
+    for model in models:
+        base = model_display_name(model)
+        label = base
+        counter = 2
+        while label in labels:
+            label = f"{base} ({counter})"
+            counter += 1
+        labels[label] = model["id"]
+    return labels
+
+
+MIN_SEASON = 1900
+MAX_SEASON = 2100
+
+
+def parse_season(text):
+    text = str(text or "").strip()
+    if not text:
+        return None
+    if not (text.isascii() and text.isdigit()) or not MIN_SEASON <= int(text) <= MAX_SEASON:
+        raise ValueError("Ano inválido. Use 4 dígitos, por exemplo 2026.")
+    return int(text)

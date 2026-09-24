@@ -37,8 +37,12 @@ docs/                     roadmap, specs, plans
 | 2 | Publicar catálogo | M | 1 | `catalog.public.json` + prévias `.webp` publicados |
 | 3 | API (Worker + D1) | M | 1 (contratos) | Criar/ler pedido; importar por código no Montador |
 | 4 | Site do cliente | M | 2 e 3 | Catálogo, montagem, envio, WhatsApp |
+| 5 | Painel de prévia de impressão (58 × 200 cm) | M | 2 e 4 | Encaixe automático em páginas, comprimento usado |
+| 6 | Upload de arte do cliente | M | 3, 4 e 5 | Arte própria no pedido, com tamanho ditado e aceite de responsabilidade |
+| 7 | Login e cadastro de clientes (telefone verificado) | M | 3 | Cliente identificado pelo WhatsApp, com código de confirmação |
 
-SP2 e SP3 podem andar em paralelo (só compartilham contratos). SP4 precisa de ambos.
+SP2 e SP3 podem andar em paralelo (só compartilham contratos). SP4 precisa de ambos. SP5 precisa do tamanho em cm de cada
+arte (SP2) e da tela de resumo (SP4). SP6 entra por último. Spec do SP5: `docs/superpowers/specs/2026-09-24-painel-previa-impressao-design.md`.
 
 ### SP2: publicar catálogo (Montador)
 
@@ -50,6 +54,13 @@ SP2 e SP3 podem andar em paralelo (só compartilham contratos). SP4 precisa de a
 - **Envio:** `POST /api/admin/publish` (manifesto + `catalog_version` = data/hora UTC) e `POST /api/admin/preview?key=`
   por arquivo, com token de administrador. Estilo RPC (só GET/POST, ids em query), como nas regras do projeto.
 - **Config local:** `config/site.json` (`api_base_url`, `admin_token`, `reader_token`), **ignorado pelo git**.
+- **Tamanho físico (necessário ao SP5):** cada item do catálogo público sai com `width_cm` e `height_cm` (pixels ÷ resolução
+  gravada no arquivo), medidos no **retângulo com tinta**, sem margem transparente; a prévia `.webp` é recortada nesse
+  retângulo.
+- **Leitura dos `.tif` (testada em 2026-09-24 com os 505 arquivos reais):** o Pillow sozinho lê só 232 (46%); os 273 CMYK
+  com transparência (5 e 6 canais) falham. `tifffile` + `imagecodecs` + `numpy` leram os 505, sem falha, em ~0,2 s por
+  arquivo. Decisão: ler com `tifffile`, converter CMYK para RGB e achatar o alfa, e usar o Pillow para redimensionar e
+  gravar `.webp`. Impacto: `numpy` aumenta o `.exe` (medir).
 - **Riscos:** TIFF com transparência, CMYK, 16 bits ou compressão exótica quebrando o Pillow (testar com 5 arquivos
   reais antes de qualquer outra coisa); tamanho do executável com Pillow; publicar por engano camisa inativa.
 - **Pronto quando:** publicar o catálogo real gera prévias legíveis e o site consegue listá-las.
@@ -82,27 +93,108 @@ SP2 e SP3 podem andar em paralelo (só compartilham contratos). SP4 precisa de a
 - **Riscos:** spam no endpoint público (Turnstile + limite obrigatórios); tokens vazando (repositório público: segredos só
   em `wrangler secret` e `config/site.json` local); código adivinhável (mitigado por token de leitura).
 - **Retenção:** pedidos apagados (lógico) após 180 dias, decisão a confirmar no SP3.
+- **Finalizar pedido (integração com o Worker `pedido-terceiro-ca-dtf`, decisão de 2026-09-24):**
+  - **Como o Worker funciona hoje (lido em 2026-09-24, só consulta):** um formulário dentro do Digisac cria a tarefa no
+    ClickUp; Automations do ClickUp (etiquetas `dtf impresso` e `dtf pronto`, parâmetro `etapa`) chamam
+    `/webhooks/clickup`, que grava no D1 e enfileira; o consumidor (`readyOrder.service.ts`) move a tarefa para
+    FINALIZADO e a arquiva. Um cron diário apaga dados operacionais concluídos há mais de 30 dias.
+  - **Ponto de ligação:** logo depois de `finalizeClickUpTask` em `readyOrder.service.ts`, em modo *best-effort* (falha
+    da chamada é registrada em `integration_events` e **não** impede a finalização).
+  - **De onde vem o código:** campo novo "Código do pedido do site" no formulário do Digisac, gravado na descrição da
+    tarefa e numa coluna nova em `orders` (migration). Na finalização usa a coluna; se vazia, procura `DTF-XXXXX` na
+    descrição da tarefa (regex do alfabeto do código; se houver mais de um, trata todos).
+  - A chamada é por **service binding** com RPC (`WorkerEntrypoint`): o Worker do site expõe `finishOrder(code)` sem rota
+    HTTP pública, então não há endpoint exposto nem token para esse trecho. O outro Worker só ganha um binding no
+    `wrangler`; nenhum código dele é alterado além da chamada.
+  - `finishOrder(code)`: apaga `uploads/<code>/` no R2, marca o pedido como concluído no D1 e devolve quantos arquivos
+    apagou. Idempotente (chamar duas vezes não falha) e código inexistente devolve "não encontrado" sem erro.
+  - Camadas de limpeza: 1) finalizar no ClickUp; 2) o Montador apaga do R2 depois de baixar a arte (SP6); 3) expiração
+    automática do R2 como rede de segurança.
 
 ### SP4: site do cliente
 
 - React + Vite + Tailwind, mobile primeiro, servido pelos assets do próprio Worker.
+- **Ponto de partida:** o protótipo do Figma Make (React 19 + Vite + Tailwind 4 + react-router), revisado em
+  `docs/design-review-figma-make.md` com a lista de correções (contraste, painel provisório, dados de exemplo, fonte, login).
 - Telas (da matriz de estados da fase de design): Time → Ano → Versão; grade de itens por categoria; resumo; pedido
   enviado. Todos os estados: vazio, carregando, erro, parcial. Carrinho em `localStorage`; reenvio seguro (idempotência).
 - WhatsApp: link `wa.me` com texto curto (código, cliente, total de peças e link). Lista completa só se couber; o código
   garante a importação de qualquer forma.
-- Cor de destaque troca por time. Tokens de design saem das imagens de referência (`/spartan:ux system`).
+- **Identidade visual:** segue `docs/brand.md` (laranja `#F47726` e grafite `#454849`, logo da Uniartes no cabeçalho).
+  Cor de destaque por time é secundária. Tokens de design saem do manual e das imagens de referência (`/spartan:ux system`).
+  Atenção: branco sobre o laranja da marca não passa no contraste (2,8:1); botões principais são grafite.
 - Testes: Vitest (lógica de carrinho) + Playwright (fluxo completo). Acessibilidade: alvos de 44 px, foco visível,
   contraste, `prefers-reduced-motion`.
 - **Pronto quando:** um pedido feito no celular vira código, abre o WhatsApp e importa no Montador.
+
+### SP5: painel de prévia de impressão
+
+Spec: `docs/superpowers/specs/2026-09-24-painel-previa-impressao-design.md`. O cliente vê, no resumo do pedido, um painel
+de 58 × 200 cm com as artes encaixadas na escala real (giro de 90°, espaço mínimo de 1/10 pol, quantidade N = N cópias),
+em páginas navegáveis e com o comprimento usado. Algoritmo em TypeScript (MaxRects), reaproveitável no Worker.
+O `layout` pode ir no pedido como campo opcional e informativo; a produção recalcula.
+
+### SP7: login de clientes (proposto em 2026-09-24, a confirmar)
+
+O **telefone (WhatsApp) é o identificador do cliente**. Sem verificar que a pessoa é dona do número, qualquer um poderia
+ver ou refazer pedidos de outro, então a **criação da conta** confirma o número com um **código de uso único** (OTP).
+
+- **Fluxo (decisão de 2026-09-24: o código serve só para criar a conta):**
+  1. **Criar conta:** número + nome → código de 6 dígitos por WhatsApp → cliente digita o código e **define uma senha**.
+  2. **Entrar depois:** número + senha, sem código, sem enviar mensagem. Sessão em cookie `HttpOnly; Secure; SameSite=Strict`.
+  3. **Esqueci a senha (decisão de 2026-09-24):** o site leva o cliente para a conversa de WhatsApp da gráfica (link `wa.me`
+     com mensagem pronta). A gráfica gera um **link de redefinição** e envia na conversa. Ao abrir o link, o site pede o
+     código, que é enviado por WhatsApp (a mesma mensagem do cadastro); com o código, o cliente define a nova senha.
+     - **Quem gera o link:** botão no Montador ("Redefinir senha do cliente") que chama `POST /api/admin/customer/reset-link`
+       (token de administrador) e copia a URL para colar no Digisac.
+     - **Regra para a equipe:** gerar o link **para o número da própria conversa** (o WhatsApp de quem escreveu), nunca para
+       um número digitado no texto. Isso impede pedir a redefinição da conta de outra pessoa.
+     - **Link:** uso único, validade curta (30 min), amarrado a um cliente; abrir o link **não** entra na conta, só libera o
+       envio do código. Ao redefinir, as sessões antigas são encerradas.
+     - **Custo em mensagens:** um código por redefinição, e a redefinição só existe depois de a gráfica agir.
+  O login pode ficar só na hora de enviar o pedido, sem travar a navegação pelo catálogo.
+- **Senha:** mínimo de 8 caracteres, guardada só como hash (PBKDF2-SHA256 nativo do Workers, com sal por conta e iterações
+  ajustadas ao limite de CPU do plano), nunca em log. Bloqueio temporário após tentativas erradas.
+- **Por que só na criação:** a conexão do WhatsApp no Digisac é **não oficial**; mandar código a muitos desconhecidos pode
+  bloquear o número da gráfica. Menos mensagens enviadas = menos risco.
+- **Envio do código:** WhatsApp pelo **Digisac**. O Worker `pedido-terceiro-ca-dtf` já envia mensagem por número com
+  `POST /messages` (`number`, `serviceId`, `dontOpenTicket`), então não é preciso existir contato nem abrir ticket. A conta
+  usa `DIGISAC_API_BASE_URL`, `DIGISAC_SERVICE_ID` e o token do Digisac (segredo). A conexão é **não oficial** (texto livre, sem modelo
+  aprovado), com o risco de bloqueio descrito acima. SMS fica como alternativa se o número for bloqueado.
+- **Dados (D1, regras do projeto):** `customers` (id, `phone` normalizado só dígitos com `55`+DDD, `name`, `password_hash`, datas UTC,
+  exclusão lógica), `signup_codes` (só o hash do código, expiração, tentativas; cadastro não confirmado expira), `sessions`. `orders` ganha `customer_id`.
+  O contrato do pedido continua com `customer.whatsapp` (agora sempre presente e normalizado).
+- **Proteções:** Turnstile e limite de envios por número e por IP (evita gastar mensagens e spam). No cadastro, número já
+  existente responde "já tem conta, entre com a senha" e **não envia código**; no login, erro genérico ("número ou senha
+  incorretos"). Bloqueio temporário após tentativas erradas.
+- **O que o cliente ganha:** dados preenchidos, histórico dos pedidos, refazer um pedido anterior e, no SP6, biblioteca
+  das próprias artes.
+- **Privacidade (LGPD):** aviso do uso do telefone e do nome, consulta e exclusão dos dados a pedido, retenção definida.
+- **Montador:** pode listar clientes e pedidos por telefone; a integração de finalização continua pelo código do pedido.
+
+### SP6: upload de arte do cliente
+
+O cliente envia uma arte junto do pedido e **dita o tamanho** (largura ou altura em cm, proporção mantida, máx. 58 cm).
+Aviso de responsabilidade com aceite registrado no pedido (data/hora e versão do texto): fundo, resolução ruim e afins são
+do cliente. Limites de segurança: tipos aceitos (PNG, JPG, PDF), tamanho máximo por arquivo e artes por pedido. A arte
+entra no encaixe do SP5 como mais um retângulo. Requer endpoint de envio no SP3.
+
+**Armazenamento (decisão de 2026-09-24):** o R2 guarda só o que faz o site funcionar (`catalog.public.json` e prévias).
+As artes dos clientes, mais pesadas, vão para o R2 **apenas como arquivo temporário** (prefixo `uploads/`, com regra de
+ciclo de vida que apaga sozinha após poucos dias) e passam a viver num servidor local. Para não expor o servidor local
+à internet, o Montador **busca** as artes pelo código do pedido (só conexão de saída), grava em disco e pede a remoção do
+R2 (`uploads/` continua com a expiração automática como rede de segurança). O destino local (pasta do PC, NAS ou servidor)
+fica atrás de uma interface simples, para trocar depois sem mexer no site.
 
 ## v2 (depois da base)
 
 | Item | O que precisa existir antes |
 |---|---|
-| Preço por metro linear + área de impressão | Tamanho em cm de cada arquivo (Pillow: pixels ÷ DPI), largura útil da película, algoritmo de encaixe, prévia visual |
+| Preço por metro linear | SP5 pronto (comprimento usado) e a tabela de preço |
+| PDF de impressão já montado | SP5 com arte em resolução real (o painel v1 é só prévia) |
 | Caixa de pedidos do dono | Endpoint de listagem (`POST /api/admin/orders/list`, offset/limit) + tela protegida (Cloudflare Access) |
 | Nome e número personalizados | Novo tipo de categoria (`custom_text`); campo aditivo `custom` no item do pedido (`{name, number}`); geração da arte por fonte |
-| Pagamento / login | Fora do plano; só se a operação mudar |
+| Pagamento online | Fora do plano; só se a operação mudar (o login de clientes agora é o SP7) |
 
 ## Ganchos de extensão que o SP1 já deixa prontos
 
@@ -121,4 +213,5 @@ SP2 e SP3 podem andar em paralelo (só compartilham contratos). SP4 precisa de a
 | Retenção de pedidos no D1 | SP3 |
 | Marca d'água: texto, posição, opacidade | SP2 |
 | Domínio do site (subdomínio próprio ou `workers.dev`) | SP4 |
+| Servidor local das artes de clientes (pasta do PC, NAS ou servidor) e quantos dias o R2 as guarda | SP6 |
 | Proteção da caixa de pedidos (Cloudflare Access vs senha) | v2 |

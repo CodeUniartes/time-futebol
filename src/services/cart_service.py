@@ -1,4 +1,5 @@
 from src.models.cart_models import CartItem
+from src.models.catalog_models import model_display_name
 
 
 class CartService:
@@ -19,7 +20,7 @@ class CartService:
             team_id=team.get("id", ""),
             team_name=team.get("name", ""),
             model_id=model.get("id", ""),
-            model_name=model.get("name", ""),
+            model_name=model_display_name(model),
             category_id=category["id"],
             category_name=category["name"],
             item_label=item_label,

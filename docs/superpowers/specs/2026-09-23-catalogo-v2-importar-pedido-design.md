@@ -156,7 +156,8 @@ O que este sub-projeto deixa pronto para que SP2, SP3 e SP4 não precisem refaze
    - raiz: `schema_version`, `catalog_version`, `teams[]`;
    - `teams[].models[]`: `id`, `name`, `season`, `description`, `categories[]`;
    - `categories[]`: `id`, `name`, `type`, `allow_group_add`, `all_files_option` (bool), `items[]`;
-   - `items[]`: `label`, `preview` (caminho relativo `previews/<time>/<camisa>/<categoria>/<item>.webp`);
+   - `items[]`: `label`, `preview` (caminho relativo `previews/<time>/<camisa>/<categoria>/<item>.webp`), `width_cm` e
+     `height_cm` (opcionais; tamanho real do retângulo com tinta, usados pelo painel do SP5);
    - só camisas `active` e categorias `enabled`; categorias de tipo "todos os arquivos" trazem o item
      `ALL_FILES_LABEL` ("Todos os arquivos"), que é o `item_label` que o pedido usa para elas (o `FileService` já copia
      a pasta inteira para esse rótulo).

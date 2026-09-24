@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "catalog_version": "2026-09-20T10:00:00.000Z",
+  "teams": [
+    {
+      "id": "atletico_mineiro",
+      "name": "Atletico Mineiro",
+      "models": [
+        {
+          "id": "home_1_2026",
+          "name": "Home 1",
+          "season": 2026,
+          "description": "Camisa branca",
+          "categories": [
+            {
+              "id": "numero_costas",
+              "name": "Número Costas",
+              "type": "individual_from_folder",
+              "allow_group_add": true,
+              "all_files_option": false,
+              "items": [
+                {
+                  "label": "10",
+                  "preview": "previews/atletico_mineiro/home_1_2026/numero_costas/10.webp",
+                  "width_cm": 14.2,
+                  "height_cm": 25.0
+                },
+                {
+                  "label": "7",
+                  "preview": "previews/atletico_mineiro/home_1_2026/numero_costas/7.webp",
+                  "width_cm": 12.8,
+                  "height_cm": 25.0
+                }
+              ]
+            },
+            {
+              "id": "camisa_completa",
+              "name": "Camisa Completa",
+              "type": "all_files_from_folder",
+              "allow_group_add": false,
+              "all_files_option": true,
+              "items": [
+                {
+                  "label": "Todos os arquivos",
+                  "preview": "previews/atletico_mineiro/home_1_2026/camisa_completa/todos.webp",
+                  "width_cm": 58.0,
+                  "height_cm": 71.5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

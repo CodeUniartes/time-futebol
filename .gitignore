@@ -12,6 +12,8 @@ dist/
 # Configuração local da máquina (caminhos D:/... e catálogo real)
 config/catalogo.json
 config/settings.json
+# Tokens da API (SP2/SP3): o repositório é público
+config/site.json
 config/backups/*
 !config/backups/.gitkeep
 

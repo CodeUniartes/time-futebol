@@ -171,6 +171,18 @@ data/pedidos_salvos
 
 Use **Pedidos Salvos** para carregar um pedido.
 
+## Importar pedido do site
+
+Use **Importar Pedido** e escolha o arquivo `.json` do pedido. O carrinho aparece preenchido, pronto para **Validar arquivos** e **Gerar pasta de produção**. Se o carrinho já tiver itens, o app pergunta se pode substituir o pedido atual.
+
+- Itens que não existem no catálogo local entram no carrinho e aparecem em um aviso; na geração caem no `arquivos_faltando.txt`.
+- Arquivo com formato errado ou versão desconhecida mostra uma mensagem e não altera o pedido atual.
+- O formato do arquivo está em `contracts/order.schema.json` (exemplo em `contracts/order.example.json`).
+
+## Ano e camisa ativa
+
+Em **Configurações**, cada camisa tem os campos **Ano** (opcional) e **Ativa (aparece no site)**. O ano aparece no menu como `Home 1 · 2026`, então camisas de mesmo nome em anos diferentes ficam separadas. Camisas inativas continuam aparecendo no Montador, para produzir pedidos antigos.
+
 ## Backup da configuração
 
 Em **Configurações**, clique em **Fazer backup**. O backup será salvo em:

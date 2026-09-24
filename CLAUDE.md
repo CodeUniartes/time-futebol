@@ -17,6 +17,8 @@ src/services/          regra de negócio + I/O (catalog, cart, order, file, vali
 src/ui/                telas CustomTkinter (order_panel = painel principal, config_window, first_run_wizard)
 src/utils/             helpers puros (path, json atômico, texto, nomes de arquivo)
 tests/                 pytest, cobre utils/services (UI não é testada)
+contracts/             schemas JSON compartilhados com o site/API (pedido, catálogo público); ver contracts/README.md
+docs/                  roadmap.md (visão dos sub-projetos), superpowers/specs e plans
 ```
 Fluxo: `OrderPanel` -> `CartService` (itens) -> `ValidationService` -> `FileService.generate` (copia p/ `PEDIDO_{n}_{cliente}_{data}` + `99_CONFERENCIA`).
 
@@ -29,7 +31,12 @@ Fluxo: `OrderPanel` -> `CartService` (itens) -> `ValidationService` -> `FileServ
 - Salvar JSON sempre via `save_json` (escrita atômica).
 - `config/catalogo.json`, `config/settings.json`, `data/pedidos_salvos`, `dist/`, `build/` NÃO vão pro git (dados locais da máquina).
   Modelo de config: `config/catalogo.example.json`. Sem catálogo, o app cria um em branco e abre o assistente.
-- Schema do catálogo tem `schema_version`; mudança incompatível => migrar em `CatalogService.load_catalog`.
+- Schema do catálogo tem `schema_version` (hoje 2); mudança incompatível => migrar em `CatalogService.migrate` (em memória; grava na próxima gravação).
+- Camisa tem `season` (int, opcional) e `active` (padrão true; só controla o que o site publica). Nome de exibição: `model_display_name`; menus usam `model_menu_map`. ID novo de camisa inclui o ano.
+- `save_catalog` grava `updated_at` (UTC, `Z`): é o `catalog_version` que o site vai carregar nos pedidos.
+- Pedido do site: `order_import_service.parse_site_order(dict, catalog)` (não sabe a origem do JSON) devolve `payload` para `OrderPanel.load_order_payload` + `warnings`. Ignora campos desconhecidos; contrato em `contracts/order.schema.json`.
+- Contratos: campo novo opcional mantém `schema_version`; o que quebra leitor antigo cria versão nova. `config/site.json` (tokens) é ignorado pelo git.
+- Roadmap (SP2 publicar catálogo, SP3 API, SP4 site, SP5 painel de prévia, SP6 upload): `docs/roadmap.md`.
 
 ## Fluxo de trabalho
 - Branch `main` estável; mudanças em `feature/<slug>` / `fix/<slug>`.

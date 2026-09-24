@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "catalog.public.schema.json",
+  "title": "Catálogo público (v1, rascunho)",
+  "description": "O que o Montador publica e o site lê. Só camisas ativas e categorias habilitadas. Campos desconhecidos são ignorados por quem lê.",
+  "type": "object",
+  "required": ["schema_version", "catalog_version", "teams"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "catalog_version": { "type": "string", "description": "updated_at do catálogo publicado (UTC, com Z)" },
+    "teams": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "models"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "name", "categories"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "name": { "type": "string", "minLength": 1 },
+                "season": { "type": "integer" },
+                "description": { "type": "string" },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "name", "items"],
+                    "properties": {
+                      "id": { "type": "string", "minLength": 1 },
+                      "name": { "type": "string", "minLength": 1 },
+                      "type": { "type": "string" },
+                      "allow_group_add": { "type": "boolean" },
+                      "all_files_option": {
+                        "type": "boolean",
+                        "description": "Categoria de arquivo inteiro: o item único usa o rótulo Todos os arquivos"
+                      },
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": ["label", "preview"],
+                          "properties": {
+                            "label": { "type": "string", "minLength": 1, "description": "É o item_label que o pedido usa" },
+                            "preview": {
+                              "type": "string",
+                              "description": "Caminho relativo: previews/<time>/<camisa>/<categoria>/<item>.webp"
+                            },
+                            "width_cm": { "type": "number", "exclusiveMinimum": 0, "description": "Largura real da área com tinta" },
+                            "height_cm": { "type": "number", "exclusiveMinimum": 0, "description": "Altura real da área com tinta" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
