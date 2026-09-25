@@ -84,3 +84,92 @@ export async function createOrder(db: D1Database, input: CreateOrderInput): Prom
   }
   throw new Error("Não foi possível gerar um código de pedido único.", { cause: lastError });
 }
+
+interface OrderRow {
+  id: string;
+  code: string;
+  status: string;
+  customer_name: string;
+  customer_whatsapp: string | null;
+  note: string | null;
+  catalog_version: string | null;
+  created_at: string;
+}
+
+interface ItemRow {
+  team_id: string;
+  team_name: string | null;
+  season: number | null;
+  model_id: string;
+  model_name: string | null;
+  category_id: string;
+  category_name: string | null;
+  item_label: string;
+  quantity: number;
+}
+
+const OPTIONAL_ITEM_FIELDS = ["team_name", "season", "model_name", "category_name"] as const;
+
+/** Pedido no formato de contracts/order.schema.json: campos opcionais vazios saem do JSON (o contrato não aceita null). */
+export async function findOrderContract(db: D1Database, code: string): Promise<Record<string, unknown> | null> {
+  const order = await db
+    .prepare("SELECT id, code, status, customer_name, customer_whatsapp, note, catalog_version, created_at FROM orders WHERE code = ? AND deleted_at IS NULL")
+    .bind(code)
+    .first<OrderRow>();
+  if (!order) return null;
+
+  const { results } = await db
+    .prepare(
+      `SELECT team_id, team_name, season, model_id, model_name, category_id, category_name, item_label, quantity
+       FROM order_items WHERE order_id = ? AND deleted_at IS NULL ORDER BY position`,
+    )
+    .bind(order.id)
+    .all<ItemRow>();
+
+  const customer: Record<string, unknown> = { name: order.customer_name };
+  if (order.customer_whatsapp) customer.whatsapp = order.customer_whatsapp;
+
+  const contract: Record<string, unknown> = {
+    schema_version: 1,
+    code: order.code,
+    created_at: order.created_at,
+    customer,
+  };
+  if (order.note) contract.note = order.note;
+  if (order.catalog_version) contract.catalog_version = order.catalog_version;
+  contract.items = results.map((row) => {
+    const item: Record<string, unknown> = {
+      team_id: row.team_id,
+      model_id: row.model_id,
+      category_id: row.category_id,
+      item_label: row.item_label,
+      quantity: row.quantity,
+    };
+    for (const field of OPTIONAL_ITEM_FIELDS) if (row[field] !== null && row[field] !== undefined) item[field] = row[field];
+    return item;
+  });
+  return contract;
+}
+
+export interface ImportedState {
+  code: string;
+  status: string;
+  imported_at: string | null;
+}
+
+/** open -> imported (guarda a primeira hora). Pedido já importado ou finalizado não muda de novo. */
+export async function markOrderImported(db: D1Database, code: string, now: Date = new Date()): Promise<ImportedState | null> {
+  const updated = await db
+    .prepare(
+      `UPDATE orders SET status = 'imported', imported_at = COALESCE(imported_at, ?2)
+       WHERE code = ?1 AND deleted_at IS NULL AND status IN ('open', 'imported')
+       RETURNING code, status, imported_at`,
+    )
+    .bind(code, now.toISOString())
+    .first<ImportedState>();
+  if (updated) return updated;
+  return db
+    .prepare("SELECT code, status, imported_at FROM orders WHERE code = ? AND deleted_at IS NULL")
+    .bind(code)
+    .first<ImportedState>();
+}
