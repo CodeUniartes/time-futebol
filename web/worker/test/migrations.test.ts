@@ -12,7 +12,7 @@ async function indexesOf(table: string): Promise<string[]> {
 }
 
 describe("migração 0001", () => {
-  it("cria as cinco tabelas", async () => {
+  it("cria as tabelas", async () => {
     const { results } = await env.DB.prepare(
       "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name != 'd1_migrations'",
     ).all<{ name: string }>();
@@ -22,6 +22,7 @@ describe("migração 0001", () => {
       "order_items",
       "orders",
       "preview_files",
+      "rate_limits",
     ]);
   });
 

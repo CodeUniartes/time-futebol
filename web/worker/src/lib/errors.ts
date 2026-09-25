@@ -13,6 +13,7 @@ export class HttpError extends Error {
     readonly code: string,
     message: string,
     readonly details?: ErrorDetail[],
+    readonly headers?: Record<string, string>,
   ) {
     super(message);
     this.name = "HttpError";
@@ -26,6 +27,7 @@ export function errorResponse(context: Context, error: HttpError): Response {
     status: error.status,
   };
   if (error.details) body.details = error.details;
+  for (const [name, value] of Object.entries(error.headers ?? {})) context.header(name, value);
   return context.json({ error: body }, error.status);
 }
 
